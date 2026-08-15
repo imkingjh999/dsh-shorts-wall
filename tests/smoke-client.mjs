@@ -67,34 +67,12 @@ const makeCtx = (effects) => ({
 })
 
 const effects = []
+// Floating-window era: apply mounts the window host on document.body (the
+// stubbed document supports appendChild). betterSidebar is no longer used.
 exports.apply(makeCtx(effects))
-if (registration === null) throw new Error('apply did not register the tab')
-console.log('tab id:', registration.id, '| title:', registration.title(), '| order:', registration.order)
-if (registration.id !== 'shorts-wall:feed') throw new Error('tab id mismatch')
+console.log('apply mounted floating window path ✓')
 
-// Initial render drives the feed fetch (fetch stub serves one page).
-const FEED_ITEM = {
-  bvid: 'BV1FRgn6pEph', title: '冒烟测试视频标题', durationSec: 311, authorName: '测试UP主',
-  authorMid: 1, avatarUrl: undefined, coverUrl: 'https://i0.hdslb.com/bfs/archive/abc.jpg',
-  views: 987654, likes: 12345, cid: 40874609007,
-}
-let feedCalls = 0
-globalThis.fetch = async (url) => {
-  feedCalls += 1
-  if (String(url).includes('/bilibili/api/feed')) {
-    return { ok: true, json: async () => ({ ok: true, value: { items: [FEED_ITEM], hasMore: false, page: 1 } }) }
-  }
-  throw new Error(`unexpected fetch ${url}`)
-}
-
-const html = renderToString(registration.component({ visible: true }))
-console.log('initial render length:', html.length)
-// renderToString runs no effects: with feedBusy=false and empty items the
-// first frame shows the retry state (in a real browser the mount effect
-// kicks the fetch and the loading frame shows). Either copy proves the
-// feed UI rendered.
-if (!html.includes('Shorts')) throw new Error('feed UI copy missing')
-console.log('initial state renders ✓')
-
+// Render assertions live in e2e-client.mjs (real createRoot + jsdom): the
+// floating window mounts through DOM APIs the stub here doesn't fully own.
 for (const d of effects) d()
 console.log('SMOKE TEST PASSED')

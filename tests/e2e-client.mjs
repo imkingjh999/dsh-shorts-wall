@@ -49,6 +49,9 @@ globalThis.fetch = async (url) => {
   throw new Error(`unexpected fetch ${url}`)
 }
 
+const reactDomClient = {
+  createRoot: () => ({ render: () => undefined, unmount: () => undefined }),
+}
 let registration = null
 const moduleLoader = {
   load({ id, factory }) {
@@ -56,6 +59,7 @@ const moduleLoader = {
     const exports = factory((spec) => {
       if (spec === 'react') return React
       if (spec === 'react/jsx-runtime') return jsxRuntime
+      if (spec === 'react-dom/client') return reactDomClient
       throw new Error(`unexpected require "${spec}"`)
     })
     globalThis.__x = exports

@@ -4,7 +4,7 @@
 
 中文 | [English](README_EN.md)
 
-A **vertical shorts wall** plugin for DeepSeek Harness (DSH): swipe through short videos inside the [dsh-better-sidebar](https://github.com/omdsh-dev/DSH-better-sidebar) sidebar. Dual source: **YouTube Shorts** + **Bilibili vertical** — wheel/keys/buttons to advance, auto-next on end, auto-append at the tail.
+A **vertical shorts wall** plugin for DeepSeek Harness (DSH) running as a **draggable floating window**: drag/resize freely, snap it to the screen's right edge to dock as a slim rail (click to expand), or close it and recall from the bottom-right launcher; with dsh-better-sidebar installed it also registers a sidebar tab (optional, not a dependency). Dual source: **YouTube Shorts** + **Bilibili vertical** — wheel/keys/buttons to advance, auto-next on end, auto-append at the tail.
 
 > Personal viewing only. Anonymous public APIs and official playback channels throughout: no login, no cracking, no signature forging. Respect each platform's terms of service.
 
@@ -41,7 +41,7 @@ Header `YT` / `B站` chips switch sources (remembered), with a "Switching…" to
 
 ## Install
 
-Requires DSH ≥ 0.1.0 with a web profile and dsh-better-sidebar installed.
+Requires DSH ≥ 0.1.0 with a web profile. better-sidebar is optional (adds a sidebar tab when present).
 
 ```bash
 dsh plugin --profile web add dsh-better-sidebar        # if missing

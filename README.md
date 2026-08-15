@@ -4,7 +4,7 @@
 
 [English](README_EN.md) | 中文
 
-**竖屏短视频墙** —— 在 [dsh-better-sidebar](https://github.com/omdsh-dev/DSH-better-sidebar) 侧边栏里刷竖屏短视频的 DeepSeek Harness（DSH）插件。双源：**YouTube Shorts** + **B站竖屏**，滚轮/键盘/按钮逐条切换，播完自动下一条，到尾自动续批。
+**竖屏短视频墙** —— 以**可拖拽浮窗**形态运行的 DeepSeek Harness（DSH）竖屏短视频插件：浮窗可拖动/缩放，**拖到屏幕右缘自动吸附为贴边竖栏**（点击展开），也可关闭后从右下角按钮唤回；若装有 dsh-better-sidebar，会同时在侧边栏注册 Shorts tab（可选，非依赖）。双源：**YouTube Shorts** + **B站竖屏**，滚轮/键盘/按钮逐条切换，播完自动下一条，到尾自动续批。
 
 > 仅供个人观看。全部走匿名公开接口与官方播放通道：不登录、不破解、不伪造签名。请遵守对应平台服务条款。
 
@@ -41,10 +41,10 @@
 
 ## 安装
 
-前置：DSH ≥ 0.1.0 的 web profile，且已安装 dsh-better-sidebar。
+前置：DSH ≥ 0.1.0 的 web profile。better-sidebar 可选（装了则同时注册侧边栏 tab）。
 
 ```bash
-dsh plugin --profile web add dsh-better-sidebar        # 若未装
+dsh plugin --profile web add dsh-better-sidebar        # 可选：侧边栏集成
 dsh plugin --profile web add github:imkingjh999/dsh-shorts-wall
 # 重启 dsh web，浏览器硬刷新（⌘⇧R / Ctrl+Shift+R）
 ```

@@ -5,6 +5,7 @@
  */
 import { createRequire } from 'node:module'
 import { describe, expect, it, beforeAll } from 'vitest'
+import { shuffled } from '../src/client/feed-state.ts'
 // Build artifacts and pnpm-path modules carry no types here.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyRec = Record<string, any>
@@ -75,6 +76,18 @@ async function setup(batchesIn: Array<Array<{ videoId: string }>>): Promise<void
 
 const act = () => reactRequire('react').act as (fn: () => Promise<void>) => Promise<void>
 const createRoot = () => (createRequire(`${PNPM}react-dom@18.3.1_react@18.3.1/node_modules/react-dom/client.js`)('react-dom/client') as AnyRec).createRoot
+
+describe('shuffled', () => {
+  it('permutes without losing or duplicating items', () => {
+    const input = Array.from({ length: 40 }, (_, i) => i)
+    for (let round = 0; round < 20; round++) {
+      const out = shuffled(input)
+      expect(out.length).toBe(40)
+      expect(new Set(out)).toEqual(new Set(input))
+    }
+    expect(shuffled([])).toEqual([])
+  })
+})
 
 describe('feed lifecycle (jsdom)', () => {
   beforeAll(async () => {

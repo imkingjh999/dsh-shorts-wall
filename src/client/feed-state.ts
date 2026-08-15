@@ -98,6 +98,18 @@ async function fetchBatch(
   return { yt: body.value.yt ?? [], bili: body.value.bili ?? [], query: body.value.query, region: body.value.region }
 }
 
+/** Fisher–Yates shuffle (returns a new array; feed batches play in random
+ *  order so every session start and every 换一批 feels fresh even when the
+ *  upstream ordering is fixed). */
+export function shuffled<T>(items: readonly T[]): T[] {
+  const out = [...items]
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[out[i], out[j]] = [out[j]!, out[i]!]
+  }
+  return out
+}
+
 /** Resolve a bilibili short's mp4 candidates through the host play route. */
 export async function fetchBiliPlay(bvid: string, cid: number): Promise<string[]> {
   const res = await fetch('/shorts/api/play', {
@@ -211,13 +223,15 @@ export function useShotsFeed(rotation: readonly RotatedEntry[], biliRotation: re
       const activeRotation = src === 'bilibili' ? biliRotation : rotation
       const batch = await fetchBatch(src, useMode, q ?? query, 1, activeRotation)
       const fresh: FeedItem[] = src === 'bilibili'
-        ? batch.bili.map(b => ({ kind: 'bili' as const, id: `bili:${b.bvid}`, bili: b }))
-        : batch.yt.map(y => ({ kind: 'yt' as const, id: `yt:${y.videoId}`, yt: y }))
+        ? shuffled(batch.bili).map(b => ({ kind: 'bili' as const, id: `bili:${b.bvid}`, bili: b }))
+        : shuffled(batch.yt).map(y => ({ kind: 'yt' as const, id: `yt:${y.videoId}`, yt: y }))
       if (fresh.length === 0) {
         setError(src === 'bilibili' ? '没有搜到竖屏视频，换个词试试' : '没有搜到 Shorts，换个词试试')
         return
       }
-      biliPageRef.current = 1
+      // Random starting page (1-3): combined with the shuffle, every session
+      // start lands on a different batch even under a fixed keyword.
+      biliPageRef.current = src === 'bilibili' ? (1 + Math.floor(Math.random() * 3)) : 1
       setItems(fresh)
       idxRef.current = 0
       setIdx(0)
@@ -245,12 +259,12 @@ export function useShotsFeed(rotation: readonly RotatedEntry[], biliRotation: re
     setError(null)
     try {
       const batch = await fetchBatch('bilibili', 'fixed', q, pageNo, biliRotation)
-      const fresh = batch.bili.map(b => ({ kind: 'bili' as const, id: `bili:${b.bvid}`, bili: b }))
+      const fresh = shuffled(batch.bili).map(b => ({ kind: 'bili' as const, id: `bili:${b.bvid}`, bili: b }))
       if (fresh.length === 0) {
         // Past the last page: wrap back to page 1 so the button always yields.
         biliPageRef.current = 1
         const first = await fetchBatch('bilibili', 'fixed', q, 1, biliRotation)
-        setItems(first.bili.map(b => ({ kind: 'bili' as const, id: `bili:${b.bvid}`, bili: b })))
+        setItems(shuffled(first.bili).map(b => ({ kind: 'bili' as const, id: `bili:${b.bvid}`, bili: b })))
         idxRef.current = 0
         setIdx(0)
         if (first.query !== undefined) { setUsedQuery(first.query); setActiveQuery(first.query) }
@@ -279,8 +293,8 @@ export function useShotsFeed(rotation: readonly RotatedEntry[], biliRotation: re
       const activeRotation = src === 'bilibili' ? biliRotation : rotation
       const batch = await fetchBatch(src, mode, query, nextPage, activeRotation)
       const fresh: FeedItem[] = src === 'bilibili'
-        ? batch.bili.map(b => ({ kind: 'bili' as const, id: `bili:${b.bvid}`, bili: b }))
-        : batch.yt.map(y => ({ kind: 'yt' as const, id: `yt:${y.videoId}`, yt: y }))
+        ? shuffled(batch.bili).map(b => ({ kind: 'bili' as const, id: `bili:${b.bvid}`, bili: b }))
+        : shuffled(batch.yt).map(y => ({ kind: 'yt' as const, id: `yt:${y.videoId}`, yt: y }))
       if (fresh.length === 0) return
       // Compute the append OUTSIDE the state updater (updaters must stay
       // pure — setState calls inside one are dropped in React 18 batches).

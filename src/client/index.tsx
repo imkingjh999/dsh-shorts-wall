@@ -177,10 +177,11 @@ function ShortsFeed({ visible }: { visible: boolean }): ReactNode {
           {t('header.next')}
         </button>
         <button type="button" title={t('header.gear')} onClick={() => { setPanelOpen(o => !o) }} style={{ background: panelOpen ? ACCENT : '#1c1c1f', border: `1px solid ${panelOpen ? ACCENT : '#2c2c30'}`, color: panelOpen ? '#fff' : '#ccc', borderRadius: 999, fontSize: 11, fontWeight: 600, padding: '3px 10px', cursor: 'pointer', whiteSpace: 'nowrap' }}>{t('header.keywords')}</button>
-        <span style={{ fontSize: 10, color: '#666' }}>{feed.items.length > 0 ? `${feed.idx + 1}/${feed.items.length}` : ''}</span>
-        <button type="button" title={muted ? t('header.unmute') : t('header.mute')} onClick={toggleMute} style={{ background: muted ? '#1c1c1f' : ACCENT, border: `1px solid ${muted ? '#2c2c30' : ACCENT}`, color: muted ? '#aaa' : '#fff', borderRadius: 999, fontSize: 11, fontWeight: 600, padding: '3px 10px', cursor: 'pointer', whiteSpace: 'nowrap' }}>{muted ? t('header.soundOff') : t('header.soundOn')}</button>
         <button type="button" title={t('header.prev')} onClick={feed.prev} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: 13, cursor: 'pointer' }}>‹</button>
         <button type="button" title={t('header.nextVideo')} onClick={feed.next} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: 13, cursor: 'pointer' }}>›</button>
+        <button type="button" title={t('header.random')} onClick={() => { feed.jumpRandom() }} style={{ background: 'none', border: 'none', color: '#aaa', fontSize: 13, cursor: 'pointer' }}>🎲</button>
+        <button type="button" title={muted ? t('header.unmute') : t('header.mute')} onClick={toggleMute} style={{ background: muted ? '#1c1c1f' : ACCENT, border: `1px solid ${muted ? '#2c2c30' : ACCENT}`, color: muted ? '#aaa' : '#fff', borderRadius: 999, fontSize: 11, fontWeight: 600, padding: '3px 10px', cursor: 'pointer', whiteSpace: 'nowrap' }}>{muted ? t('header.soundOff') : t('header.soundOn')}</button>
+        <span style={{ fontSize: 10, color: '#666' }}>{feed.items.length > 0 ? `${feed.idx + 1}/${feed.items.length}` : ''}</span>
       </div>
       {switchToast !== null && (
         <div style={{ position: 'absolute', top: 42, left: '50%', transform: 'translateX(-50%)', background: 'rgba(30,30,34,.94)', border: '1px solid #2c3a4c', borderRadius: 10, fontSize: 11, color: '#cfe3f5', padding: '5px 14px', pointerEvents: 'none', zIndex: 30 }}>{switchToast}</div>

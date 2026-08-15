@@ -153,6 +153,8 @@ export interface ShotsFeedState {
   /** Manual next/prev: append the next batch at the tail, reset the error budget. */
   next: () => void
   prev: () => void
+  /** Jump to a uniformly random index (🎲 button; avoids the current one). */
+  jumpRandom: () => void
   /** Consecutive auto-skip budget (shared with the card's error path). */
   autoSkipRef: { current: number }
   /** Reload page 1 (keyword change / retry / panel reset). */
@@ -360,6 +362,15 @@ export function useShotsFeed(rotation: readonly RotatedEntry[], biliRotation: re
     setIdxTracked((cur) => Math.max(cur - 1, 0))
   }, [setIdxTracked])
 
+  /** Uniform random jump; with >1 items it never lands on the current one. */
+  const jumpRandom = useCallback((): void => {
+    const n = itemsRef.current.length
+    if (n <= 1) return
+    const cur = idxRef.current
+    const pick = Math.floor(Math.random() * (n - 1))
+    setIdxTracked(pick >= cur ? pick + 1 : pick)
+  }, [setIdxTracked])
+
   const pin = useCallback((q: string): void => {
     try { localStorage.setItem(QUERY_KEY, q) } catch { /* optional */ }
     setQuery(q)
@@ -391,5 +402,5 @@ export function useShotsFeed(rotation: readonly RotatedEntry[], biliRotation: re
     void load(q)
   }, [load, activeQuery, rotation, biliRotation])
 
-  return { ytDown, noteYtOutcome, source, setSource, items, idx, usedQuery, activeQuery, selectQuery, refreshVideos, region, busy, error, mode, next, prev, autoSkipRef, reload: load, pin, dismissError: () => { setError(null) } }
+  return { ytDown, noteYtOutcome, source, setSource, items, idx, usedQuery, activeQuery, selectQuery, refreshVideos, region, busy, error, mode, next, prev, jumpRandom, autoSkipRef, reload: load, pin, dismissError: () => { setError(null) } }
 }

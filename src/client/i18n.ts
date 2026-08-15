@@ -41,6 +41,7 @@ const zh: Record<string, string> = {
   'header.switchingBatch': '换一批中…',
   'header.keywordTip': '点击切换关键词',
   'header.prev': '上一条（滚轮上 / ↑）',
+  'header.random': '随机跳一条',
   'header.nextVideo': '下一条（滚轮下 / ↓）',
   // errors / empty
   'err.load': '列表加载失败',
@@ -95,6 +96,7 @@ const en: Record<string, string> = {
   'header.switchingBatch': 'Fetching a new batch…',
   'header.keywordTip': 'Click to switch keyword',
   'header.prev': 'Previous (wheel up / ↑)',
+  'header.random': 'Random jump',
   'header.nextVideo': 'Next (wheel down / ↓)',
   'err.load': 'Failed to load the list',
   'err.noShorts': 'No Shorts found — try another keyword',

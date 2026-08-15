@@ -49,9 +49,8 @@ globalThis.fetch = async (url) => {
   throw new Error(`unexpected fetch ${url}`)
 }
 
-const reactDomClient = {
-  createRoot: () => ({ render: () => undefined, unmount: () => undefined }),
-}
+// Real createRoot: the floating window mounts through it.
+const reactDomClient = { createRoot }
 let registration = null
 const moduleLoader = {
   load({ id, factory }) {
@@ -80,29 +79,27 @@ globalThis.__x.apply({
     return { dispose() {} }
   },
 })
-if (registration === null) throw new Error('tab not registered')
-
-const host = document.getElementById('host')
-const root = createRoot(host)
-
-// Mount and let all effects/settled promises flush.
-await act(async () => { root.render(registration.component({ visible: true })) })
+// Floating-window era: apply already mounted the window on document.body —
+// the feed renders inside it (no registerTab). Wait for mount + feed load.
+await act(async () => { await new Promise(r => setTimeout(r, 120)) })
 await act(async () => { await new Promise(r => setTimeout(r, 50)) })
 await act(async () => { await new Promise(r => setTimeout(r, 50)) })
 
-const html = host.innerHTML
+const html = document.body.innerHTML
 const feedCall = calls.find(c => c.includes('/feed'))
 console.log('feed fetch called:', Boolean(feedCall))
 if (feedCall === undefined) throw new Error('the feed fetch never fired')
 // The shorts flow mounts the YtCard; the YT SDK cannot load in jsdom, which
 // surfaces the retry overlay — assert the card rendered with its content.
 if (!html.includes('端到端 Shorts 标题')) throw new Error('shorts card title missing from render')
-const img = host.querySelector('img')
+const img = document.body.querySelector('img')
 if (img === null || !String(img.getAttribute('src') ?? '').includes('/bilibili/proxy?u=')) {
   throw new Error('shorts thumbnail not proxied')
 }
 console.log('shorts card renders with proxied thumb ✓')
 // Unmount: the poll/handshake intervals keep the node event loop alive
 // otherwise (the process would never exit).
-await act(async () => { root.unmount() })
+await act(async () => { await Promise.resolve() })
 console.log('E2E RENDER TEST PASSED')
+
+process.exit(0)

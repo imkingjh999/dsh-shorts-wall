@@ -173,7 +173,7 @@ function ShortsFeed({ visible }: { visible: boolean }): ReactNode {
         >
           {feed.activeQuery === '' ? t('header.pickKeyword') : feed.activeQuery}
         </button>
-        <button type="button" title={t('header.nextTitle')} onClick={() => { void feed.refreshVideos() }} style={{ background: '#1c1c1f', border: '1px solid #2c2c30', color: ACCENT, borderRadius: 8, fontSize: 11, padding: '4px 9px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+        <button type="button" title={t('header.nextTitle')} onClick={() => { flashToast(t('header.switchingBatch')); feed.refreshVideos() }} style={{ background: '#1c1c1f', border: '1px solid #2c2c30', color: ACCENT, borderRadius: 8, fontSize: 11, padding: '4px 9px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
           {t('header.next')}
         </button>
         <button type="button" title={t('header.gear')} onClick={() => { setPanelOpen(o => !o) }} style={{ background: panelOpen ? ACCENT : '#1c1c1f', border: `1px solid ${panelOpen ? ACCENT : '#2c2c30'}`, color: panelOpen ? '#fff' : '#ccc', borderRadius: 999, fontSize: 11, fontWeight: 600, padding: '3px 10px', cursor: 'pointer', whiteSpace: 'nowrap' }}>{t('header.keywords')}</button>
@@ -304,7 +304,7 @@ function ShortsCard(props: {
     >
       {/* Vertical thumbnail underlay (until the player covers it) */}
       <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <img src={proxyUrl(video.thumbUrl)} alt="" style={{ height: '100%', maxWidth: '100%', objectFit: 'cover', opacity: failed ? 0.25 : 1 }} />
+        <img src={proxyUrl(video.thumbUrl)} alt="" onError={e => { e.currentTarget.style.display = 'none' }} style={{ height: '100%', maxWidth: '100%', objectFit: 'cover', opacity: failed ? 0.25 : 1 }} />
       </div>
 
       {/* The 9:16 player box, centered — the iframe fills it exactly. */}
@@ -312,7 +312,7 @@ function ShortsCard(props: {
         <div style={{ position: 'absolute', left: '50%', top: '50%', width: box.w, height: box.h, transform: 'translate(-50%, -50%)' }}>
           {!coverLifted && (
             <div style={{ position: 'absolute', inset: 0, zIndex: 2, background: '#000', pointerEvents: 'none' }}>
-              <img src={proxyUrl(video.thumbUrl)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <img src={proxyUrl(video.thumbUrl)} alt="" onError={e => { e.currentTarget.style.display = 'none' }} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           )}
           <iframe
@@ -519,7 +519,7 @@ function BiliCard(props: {
       {/* Cover underlay until the stream is ready; REMOVED once ready (an
           opacity-0 overlay would still swallow the video's pause clicks). */}
       {short.coverUrl !== '' && src === undefined && (
-        <img src={proxyUrl(short.coverUrl.replace(/^http:/, 'https:'))} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img src={proxyUrl(short.coverUrl.replace(/^http:/, 'https:'))} alt="" onError={e => { e.currentTarget.style.display = 'none' }} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
       )}
       {src !== undefined && (
         <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>

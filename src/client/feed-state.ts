@@ -236,6 +236,38 @@ export function useShotsFeed(rotation: readonly RotatedEntry[], biliRotation: re
   }, [query, rotation, biliRotation])
   loadRef.current = (q: string | null): Promise<void> => { return load(q) }
 
+  /** Load one specific bilibili page under `q` (replaces the list). Used by
+   *  refreshVideos to page forward instead of replaying page 1. */
+  const loadBiliPage = useCallback(async (q: string, pageNo: number): Promise<void> => {
+    if (loadingRef.current) return
+    loadingRef.current = true
+    setBusy(true)
+    setError(null)
+    try {
+      const batch = await fetchBatch('bilibili', 'fixed', q, pageNo, biliRotation)
+      const fresh = batch.bili.map(b => ({ kind: 'bili' as const, id: `bili:${b.bvid}`, bili: b }))
+      if (fresh.length === 0) {
+        // Past the last page: wrap back to page 1 so the button always yields.
+        biliPageRef.current = 1
+        const first = await fetchBatch('bilibili', 'fixed', q, 1, biliRotation)
+        setItems(first.bili.map(b => ({ kind: 'bili' as const, id: `bili:${b.bvid}`, bili: b })))
+        idxRef.current = 0
+        setIdx(0)
+        if (first.query !== undefined) { setUsedQuery(first.query); setActiveQuery(first.query) }
+        return
+      }
+      setItems(fresh)
+      idxRef.current = 0
+      setIdx(0)
+      if (batch.query !== undefined) { setUsedQuery(batch.query); setActiveQuery(batch.query) }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    } finally {
+      loadingRef.current = false
+      setBusy(false)
+    }
+  }, [biliRotation])
+
   /** Append the next batch when the tail is reached (seamless playback). */
   const loadMore = useCallback(async (): Promise<void> => {
     if (loadingRef.current) return
@@ -326,14 +358,23 @@ export function useShotsFeed(rotation: readonly RotatedEntry[], biliRotation: re
     pin(q)
   }, [pin])
 
-  /** Refresh videos: same keyword, page 1 (fresh ordering). Falls back to
-   *  the active source's first rotation keyword when none is selected —
-   *  `load(null)` would ROTATE to the next keyword instead. */
+  /** "More videos": bilibili pages FORWARD under the same keyword (page 1
+   *  is a fixed ordering — re-fetching it would replay from the first video,
+   *  the reported bug); youtube re-searches page 1 (its ordering shuffles
+   *  between requests, so it genuinely yields new videos). Falls back to the
+   *  active source's first rotation keyword when none is selected. */
   const refreshVideos = useCallback((): void => {
     const fallback = sourceRef.current === 'bilibili'
       ? (biliRotation[0]?.query ?? '美女 舞蹈')
       : (rotation[0]?.query ?? DEFAULT_QUERY)
-    void load(activeQuery !== '' ? activeQuery : fallback)
+    const q = activeQuery !== '' ? activeQuery : fallback
+    if (sourceRef.current === 'bilibili') {
+      // Bilibili: replace with the NEXT page (fresh videos, not a replay).
+      biliPageRef.current += 1
+      void loadBiliPage(q, biliPageRef.current)
+      return
+    }
+    void load(q)
   }, [load, activeQuery, rotation, biliRotation])
 
   return { ytDown, noteYtOutcome, source, setSource, items, idx, usedQuery, activeQuery, selectQuery, refreshVideos, region, busy, error, mode, next, prev, autoSkipRef, reload: load, pin, dismissError: () => { setError(null) } }

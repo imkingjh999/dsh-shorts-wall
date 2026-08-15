@@ -2,41 +2,72 @@
 
 > Repo: <https://github.com/imkingjh999/dsh-shorts-wall> · issues welcome
 
-A DeepSeek Harness (DSH) plugin that adds a **vertical shorts carousel** tab to the [dsh-better-sidebar](https://github.com/omdsh-dev/DSH-better-sidebar) sidebar — swipe through short videos with the mouse wheel, auto-advance on end.
+中文 | [English](README_EN.md)
 
-> Personal viewing only. Uses anonymous public APIs and official embeds; no login, no signature forging.
+A **vertical shorts wall** plugin for DeepSeek Harness (DSH): swipe through short videos inside the [dsh-better-sidebar](https://github.com/omdsh-dev/DSH-better-sidebar) sidebar. Dual source: **YouTube Shorts** + **Bilibili vertical** — wheel/keys/buttons to advance, auto-next on end, auto-append at the tail.
+
+> Personal viewing only. Anonymous public APIs and official playback channels throughout: no login, no cracking, no signature forging. Respect each platform's terms of service.
 
 ## Features
 
-- **Dual source** — switch with the `YT` / `B站` chips in the header (remembered):
-  - **YouTube Shorts**: multilingual keyword rotation (editable in the ⚙ panel); official iframe embed with a wheel-catcher veil and a watchdog that keeps auto-advancing even when the event channel is blocked.
-  - **Bilibili vertical**: same ⚙ keyword-list UX as YouTube (add/edit/remove, rotation, persisted; defaults: 美女舞蹈 / 美女翻唱 / COS小姐姐) with a portrait preflight (concurrent `view` calls confirm 9:16), **native mp4 playback** through the host proxy — real ended/error events, the most reliable auto-advance; paged tail-append.
-- **9:16 locked** — the player box is the largest vertical rectangle inscribed in the card; shorts fill edge to edge.
-- **Controls** — wheel / `↑↓` / `j`·`k` / ‹ › buttons to navigate; click the video to pause; 🔊 per-feed sound (persisted).
-- **Auto-advance** — end events advance; deterministic per-video errors auto-skip (3-in-a-row circuit breaker); dead videos skip after a 4s watchdog.
-- **i18n** — the UI follows the DSH host language (中文 / English), switching live.
-- **Keyword management** — the ⚙ panel offers **preset packs** (KPOP fancam / Beauty girls / Cosplay / Beach & swimwear / Stage — one click replaces the list, ＋ appends with dedup) plus **custom** entries (add one by one, or batch-paste `keyword | region` lines), persisted per source.
+### Dual-source carousel
+
+Header `YT` / `B站` chips switch sources (remembered), with a "Switching…" toast.
+
+| | YouTube Shorts | Bilibili vertical |
+|---|---|---|
+| Playback | Official iframe embed | **Native mp4 `<video>`** (host-proxied, Range seek works) |
+| Content | Anonymous search (shorts filter) | Anonymous search + **portrait preflight** (concurrent `view` calls confirm 9:16; landscape dropped) |
+| Auto-advance | End events + watchdog fallback | Native events (most reliable) |
+| Tail append | Same-keyword re-search, deduped | Paged append |
+
+### Keywords
+
+- The **active keyword shows as a chip** in the header (right of the B站 chip); click it to open the **keyword picker** and switch with one click
+- **"More videos"** fetches a fresh batch under the SAME keyword (not a keyword change)
+- **⚙ keyword panel**:
+  - **Preset packs** (click to replace the list, ＋ to append with dedup): KPOP fancam / Fashion / Costume / Pets / POV / Beach & swimwear / Stage
+  - **Custom**: add one by one, or batch-paste `keyword | region` lines
+  - Inline edit / reorder / delete / reset; per-source lists persisted independently (localStorage)
+
+### Playback experience
+
+- **9:16 locked**: the player is the largest vertical rectangle inscribed in the card — width and height both fit the viewport
+- **Navigation**: wheel (debounced) / `↑↓` / `j`·`k` / ‹ › buttons; a wheel-catcher veil over the iframe (wheel never swallowed), click to hand control to the player for 6s
+- **Auto-play chain**: end → next; tail → append; dead items auto-skip (3-in-a-row breaker); platform-level YT outage shows a "YouTube unavailable" banner with a one-click switch to Bilibili
+- **Sound**: text buttons "Sound on / Muted" (no emoji), preference persisted; hint pill on muted cards
+- **Intro chrome**: cover lifts after 1s, title hides after 2s (hover to see) — never blocks the picture
+- **i18n**: UI follows the DSH host language (中文 / English), switching live
 
 ## Install
 
 Requires DSH ≥ 0.1.0 with a web profile and dsh-better-sidebar installed.
 
 ```bash
-dsh plugin --profile web add dsh-better-sidebar
-cd ~/.dsh/profiles/web
-pnpm add link:~/projects/dsh-plugins/dsh-shorts-wall
-# append "dsh-shorts-wall" to dsh.profile.bundles in package.json
-pnpm install
+dsh plugin --profile web add dsh-better-sidebar        # if missing
+dsh plugin --profile web add github:imkingjh999/dsh-shorts-wall
 # restart dsh web, then hard-refresh (⌘⇧R / Ctrl+Shift+R)
 ```
 
 A「Shorts」tab appears in the sidebar `+` menu.
 
+<details>
+<summary>Local development install (link)</summary>
+
+```bash
+cd ~/.dsh/profiles/web
+pnpm add link:~/projects/dsh-plugins/dsh-shorts-wall
+# append "dsh-shorts-wall" to dsh.profile.bundles in package.json
+pnpm install && pnpm run build   # in the plugin directory
+```
+</details>
+
 ## Configuration (optional)
 
+In the profile's `cordis.patch.yml`:
+
 ```yaml
-# profile cordis.patch.yml
-- id: bilibili-sidebar
+- id: shorts-wall
   config:
     extraAllowSuffixes: [cdn.example.com]   # extra proxy allowlist suffixes
     resolveProxyUrl: http://127.0.0.1:7890  # optional personal proxy for feed scraping
@@ -44,24 +75,24 @@ A「Shorts」tab appears in the sidebar `+` menu.
 
 ## Architecture
 
-- **Host** (`src/index.ts`): `POST /bilibili/api/feed` (youtube shorts search · bilibili vertical search) + `POST /bilibili/api/play` (bilibili mp4) + `GET /bilibili/proxy` (browser-trust fence + CDN allowlist, Range passthrough).
-- **Resolvers** (`src/youtube.ts`, `src/bilibili-shorts.ts`): anonymous search scraping / portrait preflight / progressive-mp4 playurl.
-- **Client** (`src/client/`): thin render components over three hooks — `embed-events` (player event plumbing), `feed-state` (batch/append/navigation), `card-timers` (cover/title timing) — plus `i18n` (zh/en).
+- **Host** (`src/index.ts`): `POST /shorts/api/feed` (youtube shorts search · bilibili vertical search) + `POST /shorts/api/play` (bilibili mp4) + `GET /shorts/proxy` (browser-trust fence + CDN allowlist + Range passthrough). Legacy `/bilibili/*` prefixes kept for compat.
+- **Resolvers** (`src/youtube.ts`, `src/bilibili-shorts.ts`): YT anonymous search `shortsLockupViewModel` (+ legacy `reelItemRenderer`); Bilibili search + concurrent portrait preflight + html5 mp4 playurl.
+- **Client** (`src/client/`): thin render components over three behavior hooks — `embed-events` (YT player events/watchdog), `feed-state` (dual-source batches/append/keywords), `card-timers` (cover/title timing) — plus `i18n` (zh/en). better-sidebar is a runtime soft dependency (dormant when absent).
 
 ## Known limits
 
-- YouTube source needs the machine/browser to reach YouTube (mainland networks flap; `resolveProxyUrl` covers feed scraping, playback still needs browser reach).
-- Anonymous bilibili tops out at ~480p/720p; higher needs login (out of scope).
-- Host-side error messages surface in Chinese; UI chrome is bilingual.
+- The **YouTube source** needs the browser to reach YouTube; during platform risk-control (bot walls) that source is unavailable — the plugin shows a clear banner and a one-click switch to Bilibili, which is unaffected.
+- Anonymous quality tier: YT per the official embed; Bilibili ~480p/720p (higher needs login — out of scope).
+- YT anonymous search has no pagination: ~15–30 items per batch; appends re-search the same keyword with dedup.
 
 ## Development
 
 ```bash
 pnpm install
-pnpm test          # vitest (resolvers, lifecycle, i18n)
+pnpm test        # vitest: resolvers / lifecycle (jsdom) / i18n dictionaries
 pnpm typecheck
-pnpm run build
-node tests/smoke-client.mjs && node tests/e2e-client.mjs
+pnpm run build   # tsdown: host ESM + dual-channel client CJS factories
+node tests/smoke-client.mjs && node tests/e2e-client.mjs   # headless smoke + jsdom render e2e
 ```
 
 ## License

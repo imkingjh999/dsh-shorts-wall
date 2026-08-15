@@ -1,0 +1,16 @@
+{
+  "id": "dsh-external/dsh-shorts-wall",
+  "version": "0.1.0",
+  "main": "./lib/index.js",
+  "description": "在 better-sidebar 侧边栏刷竖屏短视频：YouTube Shorts + B站竖屏双源轮播（个人观看用）",
+  "engines": {
+    "dsh": ">=0.0.1"
+  },
+  "contributes": {
+    "tools": [],
+    "skills": []
+  },
+  "client": {
+    "main": "./lib/client-registry.js"
+  }
+}

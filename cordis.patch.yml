@@ -1,0 +1,12 @@
+# dsh-bilibili-sidebar bundle patch: mounts the plugin's host half into the
+# profile layer stack. Optional config row (same id) in the user's profile
+# cordis.patch.yml:
+#
+#   - id: shorts-wall
+#     config:
+#       extraAllowSuffixes: [cdn.example.com]  # additional proxy host suffixes
+#       feedPageSize: 20                       # popular feed page size (5..50)
+#
+- insert:
+    - id: shorts-wall
+      name: 'dsh-shorts-wall'

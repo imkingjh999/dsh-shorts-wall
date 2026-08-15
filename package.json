@@ -1,0 +1,70 @@
+{
+  "name": "dsh-shorts-wall",
+  "version": "1.0.0",
+  "description": "DSH web plugin: 在 better-sidebar 侧边栏刷竖屏短视频 —— YouTube Shorts + B站竖屏双源轮播（关键词词表/预设词库/看门狗自动连播）| Vertical shorts wall for dsh-better-sidebar: YouTube Shorts + Bilibili vertical, dual-source carousel with keyword packs",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imkingjh999/dsh-shorts-wall.git"
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "youtube-shorts",
+    "bilibili",
+    "vertical-video",
+    "sidebar"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "src",
+    "cordis.patch.yml",
+    "dsh.plugin.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "rm -rf lib && tsdown",
+    "bundle": "tsdown",
+    "watch": "tsdown --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepare": "tsdown"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "peerDependencies": {
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "~18.3.1",
+    "tsdown": "^0.22.2",
+    "typescript": "^5.6.0",
+    "vitest": "^4.1.8"
+  },
+  "bugs": {
+    "url": "https://github.com/imkingjh999/dsh-shorts-wall/issues"
+  },
+  "homepage": "https://github.com/imkingjh999/dsh-shorts-wall#readme",
+  "author": "imkingjh999"
+}

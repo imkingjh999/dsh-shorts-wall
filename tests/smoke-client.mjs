@@ -12,8 +12,15 @@ const { renderToString } = createRequire(`${PNPM}react-dom@18.3.1_react@18.3.1/n
 const jsxRuntime = reactRequire('react/jsx-runtime')
 
 globalThis.window = globalThis
-globalThis.document = { createElement: () => ({ style: {}, dataset: {} }), head: { appendChild() {} } }
+globalThis.document = {
+  createElement: () => ({ style: {}, dataset: {}, setAttribute() {}, remove() {}, appendChild() {} }),
+  head: { appendChild() {} },
+  body: { appendChild() {} },
+}
 
+const reactDomClient = {
+  createRoot: () => ({ render: () => undefined, unmount: () => undefined }),
+}
 let registration = null
 const loaded = []
 globalThis.__ModuleLoader__ = {
@@ -22,6 +29,7 @@ globalThis.__ModuleLoader__ = {
     const require = (spec) => {
       if (spec === 'react') return React
       if (spec === 'react/jsx-runtime') return jsxRuntime
+      if (spec === 'react-dom/client') return reactDomClient
       throw new Error(`unexpected require "${spec}"`)
     }
     const exports = factory(require)

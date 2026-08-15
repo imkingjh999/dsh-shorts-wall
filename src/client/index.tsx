@@ -11,6 +11,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
+import { createRoot } from 'react-dom/client'
 import type { YtVideo } from '../youtube.ts'
 import { useRotation, useShotsFeed, type FeedItem, type RotatedEntry } from './feed-state.ts'
 import { fetchBiliPlay } from './feed-state.ts'
@@ -65,13 +66,32 @@ function PlayGlyph({ size }: { size: number }): ReactNode {
 /** Client plugin body. */
 export function apply(ctx: ClientContext): void {
   // Locale: separate child fiber so a missing locale service never blocks
-  // (or is blocked by) the betterSidebar registration.
+  // (or is blocked by) anything else.
   ctx.inject(['locale'], (lctx) => {
     lctx.effect(() => attachLocale(lctx.locale as import('./i18n.ts').LocaleService), 'shorts-wall: attach locale')
   })
+
+  // Primary surface: a self-mounted FLOATING window on document.body — no
+  // better-sidebar dependency. Stick mode docks it to the screen's right
+  // edge as a slim vertical rail; drag to reposition; double-click the
+  // title bar to toggle stick.
+  ctx.effect(() => {
+    const host = document.createElement('div')
+    host.setAttribute('data-dsh-shorts-wall', '')
+    document.body.appendChild(host)
+    const root = createRoot(host)
+    root.render(<FloatingShell />)
+    return () => {
+      try { root.unmount() } catch { /* already gone */ }
+      host.remove()
+    }
+  }, 'shorts-wall: floating window')
+
+  // Optional better-sidebar integration: when present, the same feed also
+  // registers as a sidebar tab (both surfaces share one plugin instance).
   ctx.inject(['betterSidebar'], (sctx) => {
     const sidebar = sctx.betterSidebar
-    if (sidebar === undefined) return // service vanished mid-flight
+    if (sidebar === undefined) return // not installed — floating window is the surface
     sctx.effect(
       () =>
         sidebar.registerTab({
@@ -633,3 +653,186 @@ function KeywordPicker(props: {
     </div>
   )
 }
+
+/** ── Floating window shell ────────────────────────────────────────────────
+ *  A self-contained window mounted on document.body: FLOAT mode is a
+ *  draggable 9:16-ish panel; STICK mode docks it to the right screen edge
+ *  as a slim rail (click the rail tab to expand). State persists in
+ *  localStorage. The feed itself renders inside unchanged. */
+
+const SHELL_LS = 'dsh-shorts-wall:shell'
+
+interface ShellState {
+  mode: 'float' | 'stick' | 'closed'
+  x: number
+  y: number
+  sizeW: number
+  sizeH: number
+}
+
+const SHELL_DEFAULT: ShellState = { mode: 'float', x: 0, y: 0, sizeW: 420, sizeH: 760 }
+
+function loadShell(): ShellState {
+  try {
+    const raw = localStorage.getItem(SHELL_LS)
+    if (raw === null) return { ...SHELL_DEFAULT }
+    const parsed = JSON.parse(raw) as Partial<ShellState>
+    return {
+      mode: parsed.mode === 'stick' || parsed.mode === 'closed' || parsed.mode === 'float' ? parsed.mode : 'float',
+      x: typeof parsed.x === 'number' ? parsed.x : 0,
+      y: typeof parsed.y === 'number' ? parsed.y : 0,
+      sizeW: typeof parsed.sizeW === 'number' && parsed.sizeW >= 300 ? parsed.sizeW : SHELL_DEFAULT.sizeW,
+      sizeH: typeof parsed.sizeH === 'number' && parsed.sizeH >= 400 ? parsed.sizeH : SHELL_DEFAULT.sizeH,
+    }
+  } catch {
+    return { ...SHELL_DEFAULT }
+  }
+}
+
+function saveShell(st: ShellState): void {
+  try { localStorage.setItem(SHELL_LS, JSON.stringify(st)) } catch { /* optional */ }
+}
+
+/** The window chrome + feed. */
+function FloatingShell(): ReactNode {
+  const t = useT()
+  const [shell, setShell] = useState<ShellState>(loadShell)
+  const [stuckOpen, setStuckOpen] = useState(false)
+  const dragRef = useRef<{ dx: number; dy: number } | null>(null)
+  const shellRef = useRef<HTMLDivElement | null>(null)
+
+  const update = useCallback((patch: Partial<ShellState>): void => {
+    setShell((prev) => {
+      const next = { ...prev, ...patch }
+      saveShell(next)
+      return next
+    })
+  }, [])
+
+  // Global mousemove/up while dragging the float window.
+  useEffect(() => {
+    const onMove = (e: MouseEvent): void => {
+      const d = dragRef.current
+      if (d === null) return
+      const maxX = window.innerWidth - 120
+      const maxY = window.innerHeight - 60
+      update({ x: Math.min(Math.max(e.clientX - d.dx, 0), maxX), y: Math.min(Math.max(e.clientY - d.dy, 0), maxY) })
+      // Snap to the right edge → stick mode.
+      if (e.clientX > window.innerWidth - 24) {
+        dragRef.current = null
+        update({ mode: 'stick' })
+      }
+    }
+    const onUp = (): void => { dragRef.current = null }
+    window.addEventListener('mousemove', onMove)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      window.removeEventListener('mousemove', onMove)
+      window.removeEventListener('mouseup', onUp)
+    }
+  }, [update])
+
+  // Closed mode: small launcher button (bottom-right).
+  if (shell.mode === 'closed') {
+    return (
+      <button
+        type="button"
+        title={t('shell.open')}
+        onClick={() => { update({ mode: 'float' }) }}
+        style={{ position: 'fixed', right: 18, bottom: 18, zIndex: 2147483000, width: 44, height: 44, borderRadius: 999, background: ACCENT, color: '#fff', border: 'none', cursor: 'pointer', fontSize: 18, boxShadow: '0 8px 30px rgba(0,0,0,.5)' }}
+      >
+        <PlayGlyph size={20} />
+      </button>
+    )
+  }
+
+  // Stick mode: slim right-edge rail; click toggles an expanded overlay.
+  if (shell.mode === 'stick') {
+    return (
+      <>
+        <button
+          type="button"
+          title={t('shell.expand')}
+          onClick={() => { setStuckOpen(true) }}
+          style={{ position: 'fixed', right: 0, top: '40%', zIndex: 2147483000, writingMode: 'vertical-rl', padding: '14px 8px', background: ACCENT, color: '#fff', border: 'none', borderRadius: '10px 0 0 10px', cursor: 'pointer', fontSize: 12, fontWeight: 700, letterSpacing: 2 }}
+        >
+          Shorts
+        </button>
+        {stuckOpen && (
+          <div
+            ref={shellRef}
+            style={{ position: 'fixed', right: 12, top: '6%', bottom: '6%', width: Math.min(430, window.innerWidth - 48), zIndex: 2147483000, background: '#000', borderRadius: 14, overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,.8)', display: 'flex', flexDirection: 'column' }}
+          >
+            <ShellBar
+              t={t}
+              mode="stick"
+              onFloat={() => { setStuckOpen(false); update({ mode: 'float', x: Math.max(40, window.innerWidth - 460), y: 60 }) }}
+              onClose={() => { setStuckOpen(false) }}
+            />
+            <div style={{ flex: 1, minHeight: 0 }}>
+              <ShortsFeed visible />
+            </div>
+          </div>
+        )}
+      </>
+    )
+  }
+
+  // Float mode: draggable window at the persisted position.
+  const left = shell.x === 0 && shell.y === 0 ? undefined : shell.x
+  const top = shell.y === 0 && shell.x === 0 ? undefined : shell.y
+  return (
+    <div
+      ref={shellRef}
+      style={{
+        position: 'fixed',
+        ...(left !== undefined ? { left } : { right: 24 }),
+        ...(top !== undefined ? { top } : { top: 72 }),
+        width: shell.sizeW,
+        height: shell.sizeH,
+        maxHeight: 'calc(100vh - 48px)',
+        zIndex: 2147483000,
+        background: '#000',
+        borderRadius: 14,
+        overflow: 'hidden',
+        boxShadow: '0 24px 80px rgba(0,0,0,.8)',
+        display: 'flex',
+        flexDirection: 'column',
+        resize: 'both',
+      }}
+    >
+      <div
+        onMouseDown={(e) => {
+          if ((e.target as HTMLElement).tagName === 'BUTTON') return
+          dragRef.current = { dx: e.clientX - (shellRef.current?.offsetLeft ?? 0), dy: e.clientY - (shellRef.current?.offsetTop ?? 0) }
+        }}
+        onDoubleClick={() => { update({ mode: 'stick' }) }}
+        style={{ cursor: 'grab', userSelect: 'none' }}
+      >
+        <ShellBar t={t} mode="float" onStick={() => { update({ mode: 'stick' }) }} onClose={() => { update({ mode: 'closed' }) }} />
+      </div>
+      <div style={{ flex: 1, minHeight: 0 }}>
+        <ShortsFeed visible />
+      </div>
+    </div>
+  )
+}
+
+/** Title bar: drag handle (float) + mode buttons. */
+function ShellBar(props: { t: (k: string) => string; mode: 'float' | 'stick'; onStick?: () => void; onFloat?: () => void; onClose: () => void }): ReactNode {
+  const { t } = props
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 10px', background: '#14141a', borderBottom: '1px solid #222', cursor: 'inherit' }}>
+      <span style={{ fontSize: 11, fontWeight: 700, color: ACCENT, flex: 1 }}>Shorts</span>
+      {props.mode === 'float' && props.onStick !== undefined && (
+        <button type="button" title={t('shell.stick')} onClick={props.onStick} style={barBtn}>📌</button>
+      )}
+      {props.mode === 'stick' && props.onFloat !== undefined && (
+        <button type="button" title={t('shell.float')} onClick={props.onFloat} style={barBtn}>🪟</button>
+      )}
+      <button type="button" title={t('shell.close')} onClick={props.onClose} style={barBtn}>✕</button>
+    </div>
+  )
+}
+
+const barBtn = { background: 'none', border: 'none', color: '#999', fontSize: 13, cursor: 'pointer', padding: '2px 4px' } as const

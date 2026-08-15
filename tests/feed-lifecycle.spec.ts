@@ -13,6 +13,10 @@ const PNPM = '/Users/dev/projects/deepseek-harness/node_modules/.pnpm/'
 const reactRequire = createRequire(`${PNPM}react@18.3.1/node_modules/react/index.js`)
 const jsdomRequire = createRequire(`${PNPM}jsdom@29.1.1/node_modules/jsdom/package.json`)
 
+const reactDomClient = {
+  createRoot: () => ({ render: () => undefined, unmount: () => undefined }),
+}
+
 let registration: unknown
 let fetchCalls = 0
 let batches: Array<Array<{ videoId: string }>> = []
@@ -40,6 +44,7 @@ async function setup(batchesIn: Array<Array<{ videoId: string }>>): Promise<void
     (globalThis as AnyRec).__x = factory((spec: string) => {
       if (spec === 'react') return React
       if (spec === 'react/jsx-runtime') return jsxRuntime
+      if (spec === 'react-dom/client') return reactDomClient
       throw new Error(`unexpected ${spec}`)
     }) as unknown
   } }
@@ -48,7 +53,7 @@ async function setup(batchesIn: Array<Array<{ videoId: string }>>): Promise<void
   // @ts-expect-error built artifact carries no declaration file
   await import('../lib/client.js')
   const mod = (globalThis as AnyRec).__x as { apply(ctx: unknown): void }
-  let reg: unknown
+let reg: unknown
   mod.apply({
     effect(fn: () => () => void) { fn(); return () => {} },
     inject(deps: string[], cb: (ctx: unknown) => void) {

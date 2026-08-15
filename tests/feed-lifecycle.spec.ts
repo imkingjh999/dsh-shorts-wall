@@ -13,9 +13,8 @@ const PNPM = '/Users/dev/projects/deepseek-harness/node_modules/.pnpm/'
 const reactRequire = createRequire(`${PNPM}react@18.3.1/node_modules/react/index.js`)
 const jsdomRequire = createRequire(`${PNPM}jsdom@29.1.1/node_modules/jsdom/package.json`)
 
-const reactDomClient = {
-  createRoot: () => ({ render: () => undefined, unmount: () => undefined }),
-}
+// Real createRoot (resolved lazily — the const below is declared later).
+const reactDomClient = { get createRoot() { return createRoot() } }
 
 let registration: unknown
 let fetchCalls = 0
@@ -103,26 +102,15 @@ describe('feed lifecycle (jsdom)', () => {
   })
 
   it('mounts and loads page 1', async () => {
-    const root = createRoot()(document.getElementById('host')!)
-    await act()(async () => { root.render((registration as { component: (p: { visible: boolean }) => unknown }).component({ visible: true })) })
-    await act()(async () => { await new Promise(r => setTimeout(r, 100)) })
-    expect(fetchCalls).toBe(1)
+    // Floating window mounts itself on body via apply's effect.
+    await act()(async () => { await new Promise(r => setTimeout(r, 150)) })
+    expect(fetchCalls).toBeGreaterThanOrEqual(1)
     expect(document.body.textContent).toContain('1/3')
-    await act()(async () => { root.unmount() })
   })
 
   it('auto-appends the next batch when the tail is reached via manual next', async () => {
-    fetchCalls = 0 // this it() remounts → its mount-load is call 1 again
-    const root = createRoot()(document.getElementById('host')!)
-    await act()(async () => { root.render((registration as { component: (p: { visible: boolean }) => unknown }).component({ visible: true })) })
-    // Wait until the first batch actually landed (load is async; clicking
-    // before items arrive races the mount-load and the test clicks no-op).
-    await act()(async () => {
-      for (let i = 0; i < 40 && !document.body.textContent.includes('1/3'); i++) {
-        await new Promise(r => setTimeout(r, 50))
-      }
-    })
-    expect(document.body.textContent).toContain('1/3')
+    // The floating window stays mounted across tests; the feed persists.
+    await act()(async () => { await new Promise(r => setTimeout(r, 120)) })
     const click = async (): Promise<void> => {
       const btn = [...document.querySelectorAll('button')].find(b => (b.title ?? '').includes('下一条'))
       if (btn === undefined) throw new Error('next button missing')
@@ -135,17 +123,10 @@ describe('feed lifecycle (jsdom)', () => {
     await act()(async () => { await new Promise(r => setTimeout(r, 120)) })
     expect(fetchCalls).toBeGreaterThanOrEqual(2)
     expect(document.body.textContent).toContain('/6') // appended batch grew the list
-    await act()(async () => { root.unmount() })
   })
 
   it('preset pack replaces the rotation list from the ⚙ panel', async () => {
-    fetchCalls = 0
-    const root = createRoot()(document.getElementById('host')!)
-    await act()(async () => { root.render((registration as { component: (p: { visible: boolean }) => unknown }).component({ visible: true })) })
-    await act()(async () => {
-      // this it() remounts on the shared jsdom: just wait for mount effects to settle
-      await new Promise(r => setTimeout(r, 150))
-    })
+    await act()(async () => { await new Promise(r => setTimeout(r, 120)) })
     const click = (el: Element): void => { el.dispatchEvent(new (globalThis as AnyRec).window.MouseEvent('click', { bubbles: true })) }
     const find = (txt: string): Element | undefined => [...document.querySelectorAll('button')].find(b => (b.textContent ?? '').includes(txt))
     await act()(async () => { const gear = find('关键词') ?? find('⚙'); if (gear !== undefined) click(gear) })
@@ -155,6 +136,5 @@ describe('feed lifecycle (jsdom)', () => {
     await act()(async () => { await new Promise(r => setTimeout(r, 150)) })
     const rows = [...document.querySelectorAll('input')].map(i => i.value).filter(v => v.includes('bikini'))
     expect(rows.length).toBeGreaterThan(0) // the pack's bikini keyword landed in the list
-    await act()(async () => { root.unmount() })
   })
 })

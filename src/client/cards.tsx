@@ -9,7 +9,7 @@ import { useCoverLift, useNineBySixteen, useTitleAutoHide } from "./card-timers.
 import { useYtEmbedEvents } from "./embed-events.ts";
 import { fetchBiliPlay } from "./feed-state.ts";
 import { useT } from "./i18n.ts";
-import { ACCENT, PlayGlyph, proxyUrl, TitleBar, WheelVeil } from "./common.tsx";
+import { ACCENT, PlayGlyph, ThumbImg, TitleBar, WheelVeil } from "./common.tsx";
 
 /** One full-height 9:16 shorts card: plain iframe + event hook wiring. */
 export function ShortsCard(props: {
@@ -72,6 +72,13 @@ export function ShortsCard(props: {
     events.setMuted(props.muted);
   }, [props.muted, box, attempt, events]);
 
+  // Park playback while the shell is minimized (parity with the bili card's
+  // native-video pause); resume on restore. Re-fired on iframe swaps so a
+  // freshly mounted autoplaying embed gets parked while still minimized.
+  useEffect(() => {
+    events.setPaused(!props.visible);
+  }, [props.visible, box, attempt, events]);
+
   return (
     <div
       ref={cardRef}
@@ -93,12 +100,8 @@ export function ShortsCard(props: {
           justifyContent: "center",
         }}
       >
-        <img
-          src={proxyUrl(video.thumbUrl)}
-          alt=""
-          onError={(e) => {
-            e.currentTarget.style.display = "none";
-          }}
+        <ThumbImg
+          src={video.thumbUrl}
           style={{
             height: "100%",
             maxWidth: "100%",
@@ -130,12 +133,8 @@ export function ShortsCard(props: {
                 pointerEvents: "none",
               }}
             >
-              <img
-                src={proxyUrl(video.thumbUrl)}
-                alt=""
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                }}
+              <ThumbImg
+                src={video.thumbUrl}
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             </div>

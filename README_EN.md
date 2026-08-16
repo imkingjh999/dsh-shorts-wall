@@ -43,18 +43,39 @@ Header `YT` / `B站` chips switch sources (remembered), with a "Switching…" to
 
 ## Project status
 
-Current `review_audit` score: **90 / 100** (2026-08-16). Dimension scores:
+Current `review_audit` score: **91 / 100** (2026-08-16, v1.0.3 review baseline).
 
-| Dimension | Score |
-| --- | ---: |
-| Structure | 88 |
-| Maintainability | 90 |
-| Consistency | 90 |
-| Robustness | 85 |
-| Tests | 100 |
-| Docs | 100 |
-| Performance | 83 |
-| Security | 84 |
+### Review standard
+
+DSH `review_audit` provides the objective baseline, followed by sampled review of the host entry, proxy boundary, shell-state module, and lifecycle tests. The score is engineering health, not a security certification.
+
+**Overall score**
+
+- Arithmetic mean of eight dimensions, rounded to an integer
+- Passing threshold: **60**
+- Release target for this repository: **≥ 90**
+- Any dimension below 40 is treated as a priority failure
+
+**Dimensions and deductions**
+
+| Dimension | Current | Scoring rule |
+| --- | ---: | --- |
+| Structure | 88 | Starts at 88; minus 6 per source file over 500 lines, minus 15 when there is no directory structure |
+| Maintainability | 90 | Starts at 90; minus 2 per file containing legacy work markers, minus 4 per oversized file, minus 1 per 40 lines over 120 characters (maximum deduction 30) |
+| Consistency | 90 | Starts at 90; minus 8 per file mixing tab/space indentation, plus minus 15 for project-wide mixed indentation |
+| Robustness | 85 | Starts at 85; minus 5 per empty `catch`, minus 2 per leftover debug output |
+| Tests | 100 | Passing suite scores `60 + min(40, test-file count × 10)`; a failing suite scores 20 |
+| Docs | 100 | README 40, LICENSE 25, `.gitignore` 20, and README completeness 15 |
+| Performance | 84 | Starts at 85; minus 3 per oversized file, minus 4 per 10 dependencies (maximum deduction 20), plus minus 15 above 20,000 lines |
+| Security | 87 | Starts at 90; dependency-count deduction capped at 25, additional deductions for debug residue and empty `catch`; dependency-audit vulnerabilities add further penalties when enabled |
+
+**Minimum manual review**
+
+- Run `pnpm typecheck`, `pnpm test`, and `pnpm run build`
+- Run `node tests/smoke-client.mjs` and `node tests/e2e-client.mjs`
+- Sample the host entry, media proxy, shell state, feed lifecycle, and recently changed files
+- Verify there are no empty `catch` blocks, debug residues, or unexplained error swallowing
+- Proxy and permission boundaries must have explicit allowlists and failure paths
 
 ### Running screenshots
 

@@ -2,7 +2,7 @@
  * Shared presentation primitives and constants for the shorts wall client.
  */
 import { useEffect, useState } from "react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 export const ACCENT = "#ff2d55";
 export const WHEEL_COOLDOWN_MS = 380;
@@ -12,6 +12,30 @@ export const BUILD_TAG = "v1.0.0";
 /** Wrap an upstream URL through the host media proxy. */
 export function proxyUrl(upstream: string): string {
   return `/bilibili/proxy?u=${encodeURIComponent(upstream)}`;
+}
+
+/**
+ * Cover image: the host media proxy first, then the direct upstream URL as a
+ * one-shot fallback — the browser's own network (system proxy on the desktop
+ * side) may egress where the WSL/host tunnel cannot. Hides itself only when
+ * both paths fail.
+ */
+export function ThumbImg(props: { src: string; style?: CSSProperties }): ReactNode {
+  const [direct, setDirect] = useState(false);
+  return (
+    <img
+      src={direct ? props.src : proxyUrl(props.src)}
+      alt=""
+      onError={(e) => {
+        if (!direct && props.src.startsWith("https://")) {
+          setDirect(true);
+          return;
+        }
+        e.currentTarget.style.display = "none";
+      }}
+      style={props.style}
+    />
+  );
 }
 /** Play glyph for the tab icon and loading states. */
 export function PlayGlyph({ size }: { size: number }): ReactNode {

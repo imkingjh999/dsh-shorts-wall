@@ -241,9 +241,10 @@ export class YtFeed {
         accept: "text/html",
         "accept-language": "zh-CN,zh;q=0.9,en;q=0.8",
       },
-    }).catch(() => {
+    }).catch((error: unknown) => {
+      const cause = error instanceof Error ? error.message : String(error);
       throw new YtError(
-        "连不上 YouTube（本机网络需要能直达 YouTube，或给插件配 resolveProxyUrl 代理出口）",
+        `连不上 YouTube（本机网络需要能直达 YouTube，或给插件配 resolveProxyUrl / HTTPS_PROXY 代理出口）：${cause}`,
       );
     });
     if (!response.ok) throw new YtError(`YouTube 搜索页 HTTP ${response.status}`);

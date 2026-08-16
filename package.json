@@ -1,7 +1,7 @@
 {
   "name": "dsh-shorts-wall",
   "version": "1.0.0",
-  "description": "DSH web plugin: 在 better-sidebar 侧边栏刷竖屏短视频 —— YouTube Shorts + B站竖屏双源轮播（关键词词表/预设词库/看门狗自动连播）| Vertical shorts wall for dsh-better-sidebar: YouTube Shorts + Bilibili vertical, dual-source carousel with keyword packs",
+  "description": "DSH web plugin: 以可拖拽浮窗刷竖屏短视频 —— YouTube Shorts + B站竖屏双源轮播（关键词词表/预设词库/看门狗自动连播）| Vertical shorts wall as a draggable floating window: YouTube Shorts + Bilibili vertical, dual-source carousel with keyword packs",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -28,6 +28,7 @@
     "./package.json": "./package.json"
   },
   "files": [
+    "docs",
     "lib",
     "src",
     "cordis.patch.yml",
@@ -53,15 +54,16 @@
     }
   },
   "peerDependencies": {
-    "react": "^18.2.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
     "@types/react": "~18.3.1",
-    "@types/react-dom": "^19.2.4",
+    "jsdom": "^29.1.1",
     "tsdown": "^0.22.2",
     "typescript": "^5.6.0",
-    "vitest": "^4.1.8"
+    "vitest": "^3.2.4"
   },
   "bugs": {
     "url": "https://github.com/imkingjh999/dsh-shorts-wall/issues"

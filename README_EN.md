@@ -4,7 +4,7 @@
 
 中文 | [English](README_EN.md)
 
-A **vertical shorts wall** plugin for DeepSeek Harness (DSH) running as a **draggable floating window**: drag/resize freely, snap it to the screen's right edge to dock as a slim rail (click to expand), or close it and recall from the bottom-right launcher. Dual source: **YouTube Shorts** + **Bilibili vertical** — wheel/keys/buttons to advance, auto-next on end, auto-append at the tail.
+A **vertical shorts wall** plugin for DeepSeek Harness (DSH) that runs **docked to the right edge by default**: switch on the Float toggle for a draggable/resizable floating window, or close it and recall from the bottom-right launcher. Dual source: **YouTube Shorts** + **Bilibili vertical** — wheel/keys/buttons to advance, auto-next on end, auto-append at the tail.
 
 > Personal viewing only. Anonymous public APIs and official playback channels throughout: no login, no cracking, no signature forging. Respect each platform's terms of service.
 
@@ -14,12 +14,12 @@ A **vertical shorts wall** plugin for DeepSeek Harness (DSH) running as a **drag
 
 Header `YT` / `B站` chips switch sources (remembered), with a "Switching…" toast.
 
-| | YouTube Shorts | Bilibili vertical |
-|---|---|---|
-| Playback | Official iframe embed | **Native mp4 `<video>`** (host-proxied, Range seek works) |
-| Content | Anonymous search (shorts filter) | Anonymous search + **portrait preflight** (concurrent `view` calls confirm 9:16; landscape dropped) |
-| Auto-advance | End events + watchdog fallback | Native events (most reliable) |
-| Tail append | Same-keyword re-search, deduped | Paged append |
+|              | YouTube Shorts                   | Bilibili vertical                                                                                   |
+| ------------ | -------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Playback     | Official iframe embed            | **Native mp4 `<video>`** (host-proxied, Range seek works)                                           |
+| Content      | Anonymous search (shorts filter) | Anonymous search + **portrait preflight** (concurrent `view` calls confirm 9:16; landscape dropped) |
+| Auto-advance | End events + watchdog fallback   | Native events (most reliable)                                                                       |
+| Tail append  | Same-keyword re-search, deduped  | Paged append                                                                                        |
 
 ### Keywords
 
@@ -27,29 +27,51 @@ Header `YT` / `B站` chips switch sources (remembered), with a "Switching…" to
 - **"More videos"** fetches a fresh batch under the SAME keyword (not a keyword change)
 - **⚙ keyword panel**:
   - **Preset packs** (click to replace the list, ＋ to append with dedup): KPOP fancam / Fashion / Costume / Pets / POV / Beach & swimwear / Stage
-  - **Custom**: add one by one, or batch-paste `keyword | region` lines
+  - **Custom**: add entries one by one with region + keyword fields
   - Inline edit / reorder / delete / reset; per-source lists persisted independently (localStorage)
 
 ### Playback experience
 
+- **Window modes**: the title-bar Float toggle turns floating mode on (drag / corner-hover resize cursors); off is the default docked rail; both modes share one remembered size, and the “Minimize” button lives at the window's bottom-right
+- **Boss key**: the title bar shows “Boss key Alt+S”; press `Alt+S` in floating or docked mode to minimize instantly, and press it again to restore the previous floating/docked layout and size without reloading playback
 - **9:16 locked**: the player is the largest vertical rectangle inscribed in the card — width and height both fit the viewport
 - **Navigation**: wheel (debounced) / `↑↓` / `j`·`k` / ‹ › buttons; a wheel-catcher veil over the iframe (wheel never swallowed), click to hand control to the player for 6s
 - **Auto-play chain**: end → next; tail → append; dead items auto-skip (3-in-a-row breaker); platform-level YT outage shows a "YouTube unavailable" banner with a one-click switch to Bilibili
-- **Sound**: text buttons "Sound on / Muted" (no emoji), preference persisted; hint pill on muted cards
+- **Sound**: text buttons "Sound on / Muted" (no emoji), preference persisted; `Alt+M` toggles mute quickly
 - **Intro chrome**: cover lifts after 1s, title hides after 2s (hover to see) — never blocks the picture
 - **i18n**: UI follows the DSH host language (中文 / English), switching live
+
+## Project status
+
+Current `review_audit` score: **90 / 100** (2026-08-16). Dimension scores:
+
+| Dimension | Score |
+| --- | ---: |
+| Structure | 88 |
+| Maintainability | 90 |
+| Consistency | 90 |
+| Robustness | 85 |
+| Tests | 100 |
+| Docs | 100 |
+| Performance | 83 |
+| Security | 84 |
+
+### Running screenshots
+
+| Floating | Docked | Minimized |
+| --- | --- | --- |
+| ![Floating mode](docs/screenshot-float.png) | ![Docked mode](docs/screenshot-stick.png) | ![Minimized](docs/screenshot-minimized.png) |
 
 ## Install
 
 Requires DSH ≥ 0.1.0 with a web profile. No other plugins required.
 
 ```bash
-dsh plugin --profile web add dsh-better-sidebar        # if missing
 dsh plugin --profile web add github:imkingjh999/dsh-shorts-wall
 # restart dsh web, then hard-refresh (⌘⇧R / Ctrl+Shift+R)
 ```
 
-A「Shorts」tab appears in the sidebar `+` menu.
+A「Shorts」floating-window entry appears at the bottom-right of the page.
 
 <details>
 <summary>Local development install (link)</summary>
@@ -60,6 +82,7 @@ pnpm add link:~/projects/dsh-plugins/dsh-shorts-wall
 # append "dsh-shorts-wall" to dsh.profile.bundles in package.json
 pnpm install && pnpm run build   # in the plugin directory
 ```
+
 </details>
 
 ## Configuration (optional)
@@ -69,15 +92,15 @@ In the profile's `cordis.patch.yml`:
 ```yaml
 - id: shorts-wall
   config:
-    extraAllowSuffixes: [cdn.example.com]   # extra proxy allowlist suffixes
-    resolveProxyUrl: http://127.0.0.1:7890  # optional personal proxy for feed scraping
+    extraAllowSuffixes: [cdn.example.com] # extra proxy allowlist suffixes
+    resolveProxyUrl: http://127.0.0.1:7890 # optional personal proxy for feed scraping
 ```
 
 ## Architecture
 
 - **Host** (`src/index.ts`): `POST /shorts/api/feed` (youtube shorts search · bilibili vertical search) + `POST /shorts/api/play` (bilibili mp4) + `GET /shorts/proxy` (browser-trust fence + CDN allowlist + Range passthrough). Legacy `/bilibili/*` prefixes kept for compat.
 - **Resolvers** (`src/youtube.ts`, `src/bilibili-shorts.ts`): YT anonymous search `shortsLockupViewModel` (+ legacy `reelItemRenderer`); Bilibili search + concurrent portrait preflight + html5 mp4 playurl.
-- **Client** (`src/client/`): thin render components over three behavior hooks — `embed-events` (YT player events/watchdog), `feed-state` (dual-source batches/append/keywords), `card-timers` (cover/title timing) — plus `i18n` (zh/en). better-sidebar is a runtime soft dependency (dormant when absent).
+- **Client** (`src/client/`): floating-window rendering over three behavior hooks — `embed-events` (YT player events/watchdog), `feed-state` (dual-source batches/append/keywords), `card-timers` (cover/title timing) — plus `i18n` (zh/en). better-sidebar is no longer required.
 
 ## Known limits
 

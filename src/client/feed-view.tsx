@@ -2,7 +2,11 @@
  * Feed viewport: header controls plus the currently visible shorts card.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type {
+  KeyboardEvent as ReactKeyboardEvent,
+  ReactNode,
+  WheelEvent,
+} from "react";
 import { useRotation, useShotsFeed } from "./feed-state.ts";
 import { isMuteKey } from "./hotkeys.ts";
 import { useT } from "./i18n.ts";
@@ -106,7 +110,7 @@ export function ShortsFeed({ visible }: { visible: boolean }): ReactNode {
         position: "relative",
       }}
       tabIndex={0}
-      onKeyDown={(e) => {
+      onKeyDown={(e: ReactKeyboardEvent<HTMLDivElement>) => {
         if (e.key === "ArrowDown" || e.key === "j") {
           e.preventDefault();
           feed.next();
@@ -463,7 +467,7 @@ export function ShortsFeed({ visible }: { visible: boolean }): ReactNode {
       {/* Body: the current short, 9:16 locked */}
       <div
         style={{ flex: 1, minHeight: 0, position: "relative" }}
-        onWheel={(e) => {
+        onWheel={(e: WheelEvent<HTMLDivElement>) => {
           if (Math.abs(e.deltaY) < 12) return;
           const now = Date.now();
           if (now - lastWheelRef.current < WHEEL_COOLDOWN_MS) return;

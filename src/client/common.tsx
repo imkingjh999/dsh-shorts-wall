@@ -2,12 +2,17 @@
  * Shared presentation primitives and constants for the shorts wall client.
  */
 import { useEffect, useState } from "react";
-import type { CSSProperties, ReactNode } from "react";
+import type {
+  CSSProperties,
+  ReactNode,
+  SyntheticEvent,
+  WheelEvent,
+} from "react";
 
 export const ACCENT = "#ff2d55";
 export const WHEEL_COOLDOWN_MS = 380;
 export const MUTE_KEY = "dsh-bilibili-sidebar:muted";
-export const BUILD_TAG = "v1.0.2";
+export const BUILD_TAG = "v1.0.3";
 
 /** Wrap an upstream URL through the host media proxy. */
 export function proxyUrl(upstream: string): string {
@@ -26,7 +31,7 @@ export function ThumbImg(props: { src: string; style?: CSSProperties }): ReactNo
     <img
       src={direct ? props.src : proxyUrl(props.src)}
       alt=""
-      onError={(e) => {
+      onError={(e: SyntheticEvent<HTMLImageElement>) => {
         if (!direct && props.src.startsWith("https://")) {
           setDirect(true);
           return;
@@ -56,7 +61,7 @@ export function WheelVeil(props: {
   const [lifted, setLifted] = useState(false);
   return (
     <div
-      onWheel={(e) => {
+      onWheel={(e: WheelEvent<HTMLDivElement>) => {
         e.preventDefault();
       }}
       onClick={() => {

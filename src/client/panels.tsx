@@ -2,7 +2,7 @@
  * Header overlays: keyword picker and rotation-list management panel.
  */
 import { useState } from "react";
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import type { RotatedEntry } from "./feed-state.ts";
 import { isEn, PRESET_PACKS, useT, type PresetPack } from "./i18n.ts";
 import { ACCENT } from "./common.tsx";
@@ -161,7 +161,7 @@ export function RotationPanel(props: {
         <div key={`${i}:${entry.query}`} style={{ display: "flex", gap: 6, alignItems: "center" }}>
           <input
             value={entry.region}
-            onChange={(e) => {
+            onChange={(e: { target: { value: string } }) => {
               const next = [...props.list];
               next[i] = { ...entry, region: e.target.value };
               props.onChange(next);
@@ -179,7 +179,7 @@ export function RotationPanel(props: {
           />
           <input
             value={entry.query}
-            onChange={(e) => {
+            onChange={(e: { target: { value: string } }) => {
               const next = [...props.list];
               next[i] = { ...entry, query: e.target.value };
               props.onChange(next);
@@ -236,7 +236,7 @@ export function RotationPanel(props: {
       <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
         <input
           value={region}
-          onChange={(e) => {
+          onChange={(e: { target: { value: string } }) => {
             setRegion(e.target.value);
           }}
           placeholder={t("panel.region")}
@@ -253,10 +253,10 @@ export function RotationPanel(props: {
         />
         <input
           value={query}
-          onChange={(e) => {
+          onChange={(e: { target: { value: string } }) => {
             setQuery(e.target.value);
           }}
-          onKeyDown={(e) => {
+          onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
             if (e.key === "Enter") add();
           }}
           placeholder={t("panel.query")}

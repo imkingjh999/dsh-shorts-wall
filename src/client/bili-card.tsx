@@ -2,7 +2,7 @@
  * Native-video playback card for Bilibili shorts.
  */
 import { useEffect, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import type { MouseEvent, ReactNode, SyntheticEvent } from "react";
 import type { BiliShort } from "../bilibili-shorts.ts";
 import { useNineBySixteen } from "./card-timers.ts";
 import { fetchBiliPlay } from "./feed-state.ts";
@@ -86,7 +86,7 @@ export function BiliCard(props: {
         <img
           src={proxyUrl(short.coverUrl.replace(/^http:/, "https:"))}
           alt=""
-          onError={(e) => {
+          onError={(e: SyntheticEvent<HTMLImageElement>) => {
             e.currentTarget.style.display = "none";
           }}
           style={{
@@ -123,7 +123,7 @@ export function BiliCard(props: {
               maxWidth: "100%",
               maxHeight: "100%",
             }}
-            onClick={(e) => {
+            onClick={(e: MouseEvent<HTMLVideoElement>) => {
               const el = e.currentTarget;
               if (el.paused) {
                 try {

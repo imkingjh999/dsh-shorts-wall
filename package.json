@@ -1,7 +1,7 @@
 {
   "name": "dsh-shorts-wall",
-  "version": "1.0.2",
-  "description": "dsh-shorts-wall — docked-first vertical shorts wall plugin for DeepSeek Harness (DSH): YouTube Shorts + Bilibili vertical dual-source carousel",
+  "version": "1.0.3",
+  "description": "dsh-shorts-wall — docked-first vertical shorts wall for DSH: YouTube Shorts + Bilibili carousel",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -35,6 +35,7 @@
   "files": [
     "docs",
     "lib",
+    "scripts",
     "src",
     "cordis.patch.yml",
     "dsh.plugin.json",
@@ -45,7 +46,7 @@
     "build": "rm -rf lib && tsdown",
     "bundle": "tsdown",
     "watch": "tsdown --watch",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "node scripts/typecheck.mjs",
     "test": "vitest run",
     "prepare": "tsdown"
   },
@@ -63,11 +64,8 @@
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "@types/node": "^24.0.0",
-    "@types/react": "~18.3.1",
     "jsdom": "^29.1.1",
     "tsdown": "^0.22.2",
-    "typescript": "^5.6.0",
     "vitest": "^3.2.4"
   },
   "bugs": {

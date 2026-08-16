@@ -10,8 +10,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
-    "noEmit": true,
-    "types": ["node"]
+    "noEmit": true
   },
   "include": ["src", "tests"]
 }

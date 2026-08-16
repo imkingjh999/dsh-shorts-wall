@@ -284,7 +284,7 @@ export function FloatingShell(): ReactNode {
         <div
           onMouseDown={
             float
-              ? (e) => {
+              ? (e: ReactMouseEvent<HTMLDivElement>) => {
                   if ((e.target as HTMLElement).closest("button") !== null) return;
                   dragRef.current = {
                     dx: e.clientX - (shellRef.current?.offsetLeft ?? 0),
@@ -352,7 +352,7 @@ export function FloatingShell(): ReactNode {
               key={corner}
               data-resize-corner={corner}
               aria-hidden="true"
-              onMouseDown={(e) => {
+              onMouseDown={(e: ReactMouseEvent<HTMLDivElement>) => {
                 startResizeEvent(e, corner);
               }}
               style={{

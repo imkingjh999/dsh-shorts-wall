@@ -28,6 +28,17 @@ export interface TunnelResponse {
   text(): Promise<string>;
   json(): Promise<unknown>;
   arrayBuffer(): Promise<ArrayBuffer>;
+  /** Marker distinguishing tunneled (buffered) responses from fetch Responses. */
+  readonly tunnel: true;
+}
+
+/** Whether a response object came from {@link createProxyFetch} (buffered body, no stream). */
+export function isTunnelResponse(response: unknown): response is TunnelResponse {
+  return (
+    typeof response === "object" &&
+    response !== null &&
+    (response as { tunnel?: unknown }).tunnel === true
+  );
 }
 
 const REDIRECT_LIMIT = 5;
@@ -93,6 +104,7 @@ function tunnelOnce(
             resolve({
               ok: status >= 200 && status < 300,
               status,
+              tunnel: true,
               headers: {
                 get: (name: string) => headerRecord[name.toLowerCase()] ?? null,
               },
@@ -120,22 +132,23 @@ function tunnelOnce(
 
 /**
  * Build a fetch-like function egressing https requests through an
- * HTTP CONNECT proxy (manual/follow redirects supported).
+ * HTTP CONNECT proxy (manual/follow redirects supported). Non-https
+ * targets fall back to a direct fetch and return the plain Response.
  */
 export function createProxyFetch(
   proxyUrlRaw: string,
   timeoutMs: number,
-): (url: string, init?: TunnelInit) => Promise<TunnelResponse> {
+): (url: string, init?: TunnelInit) => Promise<TunnelResponse | Response> {
   const proxyUrl = new URL(proxyUrlRaw);
   return async (url, init = {}) => {
     let target = new URL(url);
     const redirect = init.redirect ?? "follow";
     if (target.protocol !== "https:") {
-      return (await fetch(url, {
+      return fetch(url, {
         headers: init.headers,
         redirect,
         signal: init.signal,
-      })) as TunnelResponse;
+      });
     }
     for (let hop = 0; hop <= REDIRECT_LIMIT; hop++) {
       const response = await tunnelOnce(

@@ -5,14 +5,15 @@
  * flow that used to strand cards at「取播放地址中」.
  */
 import { createRequire } from "node:module";
-const PNPM = "/Users/dev/projects/deepseek-harness/node_modules/.pnpm/";
-const jsdomRequire = createRequire(`${PNPM}jsdom@29.1.1/node_modules/jsdom/package.json`);
-const reactRequire = createRequire(`${PNPM}react@18.3.1/node_modules/react/index.js`);
+// Resolve through this checkout's node_modules (pnpm auto-installed peers) so
+// the e2e test runs on any machine, not just the original author's.
+const jsdomRequire = createRequire(import.meta.resolve("jsdom"));
+const reactRequire = createRequire(import.meta.resolve("react"));
 const React = reactRequire("react");
 const { act } = reactRequire("react");
-const { createRoot } = createRequire(
-  `${PNPM}react-dom@18.3.1_react@18.3.1/node_modules/react-dom/client.js`,
-)("react-dom/client");
+const { createRoot } = createRequire(import.meta.resolve("react-dom/client"))(
+  "react-dom/client",
+);
 const jsxRuntime = reactRequire("react/jsx-runtime");
 
 const { JSDOM } = jsdomRequire("jsdom");

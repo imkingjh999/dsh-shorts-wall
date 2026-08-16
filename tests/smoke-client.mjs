@@ -5,12 +5,14 @@
  * tab component (initial loading state; then with items + streams).
  */
 import { createRequire } from "node:module";
-const PNPM = "/Users/dev/projects/deepseek-harness/node_modules/.pnpm/";
-const reactRequire = createRequire(`${PNPM}react@18.3.1/node_modules/react/index.js`);
+// Resolve through this checkout's node_modules (pnpm auto-installed peers) so
+// the smoke test runs on any machine, not just the original author's.
+const reactEntry = import.meta.resolve("react");
+const reactRequire = createRequire(reactEntry);
 const React = reactRequire("react");
-const { renderToString } = createRequire(
-  `${PNPM}react-dom@18.3.1_react@18.3.1/node_modules/react-dom/server.js`,
-)("react-dom/server");
+const { renderToString } = createRequire(import.meta.resolve("react-dom/server"))(
+  "react-dom/server",
+);
 const jsxRuntime = reactRequire("react/jsx-runtime");
 
 globalThis.window = globalThis;

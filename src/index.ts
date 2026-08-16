@@ -15,7 +15,7 @@ import { Readable } from "node:stream";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { DEFAULT_QUERY, YtError, YtFeed } from "./youtube.ts";
 import { BiliShortsError, BiliShortsFeed } from "./bilibili-shorts.ts";
-import { createProxyFetch } from "./proxy-fetch.ts";
+import { createProxyFetch, isTunnelResponse, type TunnelResponse } from "./proxy-fetch.ts";
 
 /** Plugin identity for cordis.yml rows. */
 export const name = "dsh-shorts-wall";
@@ -43,6 +43,54 @@ interface PluginConfig {
   extraAllowSuffixes?: string[];
   /** Optional HTTP CONNECT proxy (e.g. http://127.0.0.1:7890) for feed scraping egress. */
   resolveProxyUrl?: string;
+}
+
+/**
+ * Resolve the egress proxy: explicit config first, then the standard proxy
+ * environment variables. Node's fetch ignores HTTP(S)_PROXY, but WSL/desktop
+ * setups almost always export one pointing at the local clash/v2ray exit —
+ * falling back to it makes YouTube work out of the box on such hosts. Only
+ * `http://` proxies qualify (the tunnel speaks plain HTTP CONNECT).
+ */
+function detectProxyUrl(configured: string | undefined): string | undefined {
+  if (typeof configured === "string" && configured !== "") return configured;
+  for (const key of [
+    "HTTPS_PROXY",
+    "https_proxy",
+    "HTTP_PROXY",
+    "http_proxy",
+    "ALL_PROXY",
+    "all_proxy",
+  ]) {
+    const value = process.env[key];
+    if (typeof value === "string" && value.startsWith("http://")) return value;
+  }
+  return undefined;
+}
+
+/**
+ * Host suffixes that egress through the proxy when one is active: YouTube's
+ * own domains only. Bilibili APIs/CDNs are mainland-direct (and overseas
+ * CDNs often reject foreign IPs), so they always stay on the direct path.
+ */
+const TUNNEL_SUFFIXES = [
+  "youtube.com",
+  "youtube-nocookie.com",
+  "ytimg.com",
+  "googlevideo.com",
+  "ggpht.com",
+  "googleusercontent.com",
+];
+
+/** Whether a URL's host belongs to the tunnel-egress set. */
+function isTunnelHost(rawUrl: string): boolean {
+  let host: string;
+  try {
+    host = new URL(rawUrl).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return TUNNEL_SUFFIXES.some((suffix) => host === suffix || host.endsWith(`.${suffix}`));
 }
 
 /** Proxy allowlist: YouTube thumbnails only (playback is the official embed,
@@ -161,12 +209,20 @@ export function apply(ctx: HostContext, config?: PluginConfig): void {
     : [];
   const fence = (req: IncomingMessage): boolean =>
     isTrustedRequest(req, ctx.webRuntime.trustedHosts);
-  // Scraping egress optionally goes through a personal proxy (mainland
-  // networks reach YouTube intermittently). Unset = direct fetch.
-  const scrapeFetch =
-    typeof rawConfig.resolveProxyUrl === "string" && rawConfig.resolveProxyUrl !== ""
-      ? (createProxyFetch(rawConfig.resolveProxyUrl, 20_000) as unknown as typeof fetch)
-      : fetch;
+  // Scraping/thumbnail egress: YouTube-owned hosts go through the personal
+  // proxy when one is configured or inherited from the environment (Node's
+  // fetch ignores HTTP(S)_PROXY, mainland networks cannot reach YouTube
+  // directly); Bilibili hosts always stay direct. Unset = direct everywhere.
+  const proxyUrl = detectProxyUrl(rawConfig.resolveProxyUrl);
+  const tunnel = proxyUrl !== undefined ? createProxyFetch(proxyUrl, 20_000) : undefined;
+  // One fetch-like for both scrapers: tunnel YouTube hosts, direct the rest.
+  const scrapeFetch = ((
+    url: string,
+    init?: { headers?: Record<string, string>; redirect?: "follow" | "manual"; signal?: AbortSignal },
+  ) =>
+    tunnel !== undefined && isTunnelHost(url)
+      ? tunnel(url, init)
+      : fetch(url, init)) as unknown as typeof fetch;
   const ytFeed = new YtFeed(scrapeFetch);
   const biliShorts = new BiliShortsFeed(scrapeFetch);
 
@@ -381,17 +437,29 @@ export function apply(ctx: HostContext, config?: PluginConfig): void {
       // allowlist — an allowed CDN must not be able to bounce us to an
       // arbitrary (possibly loopback) host.
       let currentUrl = url;
-      let upstream: Response | undefined;
+      let upstream: Response | TunnelResponse | undefined;
       for (let hop = 0; hop < 5; hop++) {
-        const response = await fetch(currentUrl, {
-          redirect: "manual",
-          signal: AbortSignal.timeout(PROXY_TIMEOUT_MS),
-          headers: {
-            "user-agent": DESKTOP_UA,
-            accept: "*/*",
-            ...(range !== undefined ? { range } : {}),
-          },
-        });
+        const mediaHeaders = {
+          "user-agent": DESKTOP_UA,
+          accept: "*/*",
+          ...(range !== undefined ? { range } : {}),
+        };
+        // YouTube thumbnails (i.ytimg.com) are unreachable on direct egress
+        // where the tunnel exists, so per-hop: tunnel YouTube hosts, direct
+        // the rest. Tunneled bodies are buffered — fine for thumbnails; the
+        // large streams (Bilibili video CDNs) always take the direct path.
+        const response =
+          tunnel !== undefined && isTunnelHost(currentUrl)
+            ? await tunnel(currentUrl, {
+                redirect: "manual",
+                signal: AbortSignal.timeout(PROXY_TIMEOUT_MS),
+                headers: mediaHeaders,
+              })
+            : await fetch(currentUrl, {
+                redirect: "manual",
+                signal: AbortSignal.timeout(PROXY_TIMEOUT_MS),
+                headers: mediaHeaders,
+              });
         const location = response.headers.get("location");
         if (response.status >= 300 && response.status < 400) {
           if (location === null) {
@@ -409,7 +477,9 @@ export function apply(ctx: HostContext, config?: PluginConfig): void {
             });
             return;
           }
-          await response.body?.cancel().catch(() => undefined);
+          if (!isTunnelResponse(response)) {
+            await response.body?.cancel().catch(() => undefined);
+          }
           currentUrl = nextUrl;
           continue;
         }
@@ -446,6 +516,16 @@ export function apply(ctx: HostContext, config?: PluginConfig): void {
       ]) {
         const value = upstream.headers.get(header);
         if (value !== null) headers[header] = value;
+      }
+      if (isTunnelResponse(upstream)) {
+        // Buffered tunnel body (thumbnail-sized): write it in one shot.
+        const body = Buffer.from(await upstream.arrayBuffer());
+        if (headers["content-length"] === undefined) {
+          headers["content-length"] = String(body.byteLength);
+        }
+        res.writeHead(upstream.status, headers);
+        res.end(req.method === "HEAD" ? undefined : body);
+        return;
       }
       res.writeHead(upstream.status, headers);
       if (req.method === "HEAD" || upstream.body === null) {

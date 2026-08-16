@@ -29,6 +29,8 @@ export interface EmbedEvents {
   readonly alive: boolean;
   /** Send a mute/unMute command to the live iframe. */
   readonly setMuted: (muted: boolean) => void;
+  /** Send a pauseVideo/playVideo command to the live iframe. */
+  readonly setPaused: (paused: boolean) => void;
 }
 
 /** One postMessage helper bound to an iframe ref. */
@@ -194,5 +196,21 @@ export function useYtEmbedEvents(
     [iframeRef],
   );
 
-  return { started, playing, alive, advance, fail: handlers.onError, setMuted };
+  /**
+   * Send a pauseVideo/playVideo command (re-fired by the caller on iframe
+   * swaps — a freshly mounted autoplaying embed must be parked again while
+   * the shell stays minimized).
+   */
+  const setPaused = useCallback(
+    (paused: boolean): void => {
+      posterOf(iframeRef)({
+        event: "command",
+        func: paused ? "pauseVideo" : "playVideo",
+        args: [],
+      });
+    },
+    [iframeRef],
+  );
+
+  return { started, playing, alive, advance, fail: handlers.onError, setMuted, setPaused };
 }

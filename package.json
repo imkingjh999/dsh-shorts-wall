@@ -1,6 +1,6 @@
 {
   "name": "dsh-shorts-wall",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "dsh-shorts-wall — docked-first vertical shorts wall plugin for DeepSeek Harness (DSH): YouTube Shorts + Bilibili vertical dual-source carousel",
   "type": "module",
   "license": "MIT",

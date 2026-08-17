@@ -246,7 +246,7 @@ describe("feed lifecycle (jsdom)", () => {
     expect(after).toBe(!before);
   });
 
-  it("shares one size between float and dock and exposes four resize corners", async () => {
+  it("shares one size and position between float and dock with four resize corners", async () => {
     const click = (el: Element): void => {
       el.dispatchEvent(
         new (globalThis as AnyRec).window.MouseEvent("click", { bubbles: true }),
@@ -277,10 +277,18 @@ describe("feed lifecycle (jsdom)", () => {
     };
 
     await setFloating(true);
-    const floatWidth = panel().style.width;
+    const floatRect = {
+      left: panel().style.left,
+      top: panel().style.top,
+      width: panel().style.width,
+      height: panel().style.height,
+    };
     await setFloating(false);
 
-    expect(panel().style.width).toBe(floatWidth);
+    expect(panel().style.left).toBe(floatRect.left);
+    expect(panel().style.top).toBe(floatRect.top);
+    expect(panel().style.width).toBe(floatRect.width);
+    expect(panel().style.height).toBe(floatRect.height);
     expect(document.querySelectorAll("[data-resize-corner]")).toHaveLength(4);
   });
 });

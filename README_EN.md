@@ -32,7 +32,7 @@ Header `YT` / `B站` chips switch sources (remembered), with a "Switching…" to
 
 ### Playback experience
 
-- **Window modes**: the title-bar Float toggle turns floating mode on (drag / corner-hover resize cursors); off is the default docked rail; both modes share one remembered size, and the “Minimize” button lives at the window's bottom-right
+- **Window modes**: the title-bar Float toggle turns floating mode on (drag / corner-hover resize cursors); off is the default docked rail; both modes share one remembered position and size, so the window never moves when toggling, and the “Minimize” button lives at the window's bottom-right
 - **Boss key**: the title bar shows “Boss key Alt+S”; press `Alt+S` in floating or docked mode to minimize instantly, and press it again to restore the previous floating/docked layout and size without reloading playback
 - **9:16 locked**: the player is the largest vertical rectangle inscribed in the card — width and height both fit the viewport
 - **Navigation**: wheel (debounced) / `↑↓` / `j`·`k` / ‹ › buttons; a wheel-catcher veil over the iframe (wheel never swallowed), click to hand control to the player for 6s
@@ -43,7 +43,7 @@ Header `YT` / `B站` chips switch sources (remembered), with a "Switching…" to
 
 ## Project status
 
-Current `review_audit` score: **91 / 100** (2026-08-16, v1.0.3 review baseline).
+Current `review_audit` score: **91 / 100** (2026-08-17, v1.0.4 review baseline).
 
 ### Review standard
 

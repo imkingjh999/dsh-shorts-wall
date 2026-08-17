@@ -12,7 +12,7 @@ import type {
 export const ACCENT = "#ff2d55";
 export const WHEEL_COOLDOWN_MS = 380;
 export const MUTE_KEY = "dsh-bilibili-sidebar:muted";
-export const BUILD_TAG = "v1.0.3";
+export const BUILD_TAG = "v1.0.4";
 
 /** Wrap an upstream URL through the host media proxy. */
 export function proxyUrl(upstream: string): string {

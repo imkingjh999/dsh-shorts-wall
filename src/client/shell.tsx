@@ -80,7 +80,7 @@ export function FloatingShell(): ReactNode {
       });
       if (e.clientX > window.innerWidth - 24) {
         dragRef.current = null;
-        update({ mode: "stick", stickY: null });
+        update({ mode: "stick" });
         setStuckOpen(true);
       }
       return;
@@ -104,30 +104,18 @@ export function FloatingShell(): ReactNode {
       Math.max(MIN_SHELL_H, resize.height + (growsUp ? -dy : dy)),
     );
 
-    if (resize.isFloat) {
-      const right = resize.x + resize.width;
-      const bottom = resize.y + resize.height;
-      const x = growsLeft ? right - width : resize.x;
-      const y = growsUp ? bottom - height : resize.y;
-      update({
-        sizeW: width,
-        sizeH: height,
-        x: Math.min(Math.max(x, 0), Math.max(0, window.innerWidth - width)),
-        y: Math.min(Math.max(y, 0), Math.max(0, window.innerHeight - height)),
-      });
-      return;
-    }
-
-    // Docked mode keeps the right edge fixed; top corners also keep the bottom fixed.
+    // Both modes share one viewport rectangle: resizing anchors the opposite
+    // corner/edge exactly as a floating window does, so toggling the mode
+    // never repositions the panel.
+    const right = resize.x + resize.width;
     const bottom = resize.y + resize.height;
+    const x = growsLeft ? right - width : resize.x;
     const y = growsUp ? bottom - height : resize.y;
     update({
       sizeW: width,
       sizeH: height,
-      stickY: Math.min(
-        Math.max(y, 12),
-        Math.max(12, window.innerHeight - height - 12),
-      ),
+      x: Math.min(Math.max(x, 0), Math.max(0, window.innerWidth - width)),
+      y: Math.min(Math.max(y, 0), Math.max(0, window.innerHeight - height)),
     });
   };
 
@@ -159,28 +147,19 @@ export function FloatingShell(): ReactNode {
         pointerY: e.clientY,
         width: el.offsetWidth,
         height: el.offsetHeight,
-        x: el.offsetLeft,
-        y: el.offsetTop,
-        isFloat: !stick,
-      };
-    },
-    [stick],
-  );
+      x: el.offsetLeft,
+      y: el.offsetTop,
+    };
+  }, []);
 
-  const left = float && shell.x === 0 && shell.y === 0 ? undefined : shell.x;
-  const top = float && shell.y === 0 && shell.x === 0 ? undefined : shell.y;
   const panelW = Math.max(MIN_SHELL_W, Math.min(shell.sizeW, window.innerWidth - 24));
   const panelH = Math.max(MIN_SHELL_H, Math.min(shell.sizeH, window.innerHeight - 24));
-  const safeStickY = Math.min(
-    Math.max(shell.stickY ?? (window.innerHeight - panelH) / 2, 12),
-    Math.max(12, window.innerHeight - panelH - 12),
+  const safeLeft = Math.min(
+    Math.max(shell.x, 0),
+    Math.max(0, window.innerWidth - panelW),
   );
-  const safeLeft =
-    left === undefined
-      ? undefined
-      : Math.min(Math.max(left, 0), Math.max(0, window.innerWidth - panelW));
   const safeTop = Math.min(
-    Math.max(top ?? 72, 0),
+    Math.max(shell.y, 0),
     Math.max(0, window.innerHeight - panelH),
   );
   const panelStyle: CSSProperties = minimized
@@ -191,37 +170,26 @@ export function FloatingShell(): ReactNode {
         visibility: "hidden",
         pointerEvents: "none",
       }
-    : stick
-      ? {
-          position: "fixed",
-          right: 12,
-          top: safeStickY,
-          width: panelW,
-          height: panelH,
-          zIndex: 2147483000,
-          background: "#000",
-          borderRadius: 14,
-          overflow: "hidden",
-          boxShadow: "0 24px 80px rgba(0,0,0,.8)",
-          display: "flex",
-          flexDirection: "column",
-          visibility: stuckOpen ? "visible" : "hidden",
-          pointerEvents: stuckOpen ? "auto" : "none",
-        }
-      : {
-          position: "fixed",
-          ...(safeLeft !== undefined ? { left: safeLeft } : { right: 24 }),
-          top: safeTop,
-          width: panelW,
-          height: panelH,
-          zIndex: 2147483000,
-          background: "#000",
-          borderRadius: 14,
-          overflow: "hidden",
-          boxShadow: "0 24px 80px rgba(0,0,0,.8)",
-          display: "flex",
-          flexDirection: "column",
-        };
+    : {
+        position: "fixed",
+        left: safeLeft,
+        top: safeTop,
+        width: panelW,
+        height: panelH,
+        zIndex: 2147483000,
+        background: "#000",
+        borderRadius: 14,
+        overflow: "hidden",
+        boxShadow: "0 24px 80px rgba(0,0,0,.8)",
+        display: "flex",
+        flexDirection: "column",
+        ...(stick
+          ? {
+              visibility: stuckOpen ? "visible" : "hidden",
+              pointerEvents: stuckOpen ? "auto" : "none",
+            }
+          : {}),
+      };
   const feedNode = (
     <div style={{ flex: 1, minHeight: 0, position: "relative" }}>
       <ShortsFeed visible={!minimized} />
@@ -296,7 +264,7 @@ export function FloatingShell(): ReactNode {
           onDoubleClick={
             float
               ? () => {
-                  update({ mode: "stick", stickY: null });
+                  update({ mode: "stick" });
                   setStuckOpen(true);
                 }
               : undefined
@@ -307,15 +275,9 @@ export function FloatingShell(): ReactNode {
             t={t}
             floating={float}
             onFloatingChange={(next) => {
-              if (next) {
-                update({
-                  mode: "float",
-                  x: Math.max(40, window.innerWidth - shell.sizeW - 40),
-                  y: 60,
-                });
-                return;
-              }
-              update({ mode: "stick", stickY: null });
+              // Float and dock are behavior modes, not layout presets: keep
+              // the shared viewport position and size exactly where they are.
+              update({ mode: next ? "float" : "stick" });
               setStuckOpen(true);
             }}
           />

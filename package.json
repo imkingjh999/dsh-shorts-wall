@@ -1,6 +1,6 @@
 {
   "name": "dsh-shorts-wall",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "dsh-shorts-wall — docked-first vertical shorts wall for DSH: YouTube Shorts + Bilibili carousel",
   "type": "module",
   "license": "MIT",
@@ -78,6 +78,6 @@
   "homepage": "https://github.com/imkingjh999/dsh-shorts-wall#readme",
   "author": "imkingjh999",
   "dependencies": {
-    "dsh-float-window": "^0.1.0"
+    "dsh-float-window": "^0.2.0"
   }
 }

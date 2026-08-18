@@ -8,7 +8,6 @@ import type { ReactNode } from "react";
 import { FloatWindow } from "dsh-float-window";
 import { ACCENT, PlayGlyph } from "./common.tsx";
 import { ShortsFeed } from "./feed-view.tsx";
-import { isBossKey } from "./hotkeys.ts";
 import { useT } from "./i18n.ts";
 
 export function FloatingShell(): ReactNode {
@@ -24,7 +23,9 @@ export function FloatingShell(): ReactNode {
       minW={300}
       minH={400}
       defaultMode="stick"
-      isBossKey={isBossKey}
+      // Declarative boss key: registered in the shared float-window registry
+      // so the deepsea window gets auto-assigned a different combo.
+      bossKey="Alt+S"
       labels={{
         openTitle: t("shell.open"),
         expandTitle: t("shell.expand"),

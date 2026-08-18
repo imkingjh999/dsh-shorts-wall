@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      dsh-float-window:
+        specifier: link:../dsh-float-window
+        version: link:../dsh-float-window
       react:
         specifier: ^18.2.0
         version: 18.3.1

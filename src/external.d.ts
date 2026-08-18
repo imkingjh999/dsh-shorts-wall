@@ -1,4 +1,9 @@
-/** Local ambient declarations for host-provided Node, React, and test APIs. */
+/**
+ * Local ambient declarations for host-provided Node APIs. React/react-dom
+ * types now resolve from @types/react (single universe, shared with
+ * dsh-float-window); the old loose stubs merged with the real declarations
+ * and poisoned JSX checking, so they are gone.
+ */
 
 declare var process: {
   env: Record<string, string | undefined>;
@@ -83,86 +88,7 @@ declare module "node:module" {
   }
 }
 
-declare module "react" {
-  export type DependencyList = readonly unknown[];
-  export type ReactNode = unknown;
-  export type CSSProperties = Record<string, unknown>;
-  export type SetStateAction<S> = S | ((previous: S) => S);
-  export type Dispatch<A> = (action: A) => void;
-  export type RefObject<T> = { current: T | null };
-
-  export interface SyntheticEvent<T = Element> {
-    preventDefault(): void;
-    stopPropagation(): void;
-    currentTarget: T;
-    target: EventTarget;
-    clientX: number;
-    clientY: number;
-  }
-
-  export type MouseEvent<T = Element> = SyntheticEvent<T>;
-  export interface KeyboardEvent<T = Element> extends SyntheticEvent<T> {
-    key: string;
-  }
-  export interface WheelEvent<T = Element> extends SyntheticEvent<T> {
-    deltaY: number;
-  }
-
-  export function useCallback<T>(callback: T, deps: DependencyList): T;
-  export function useEffect(
-    effect: () => void | (() => void),
-    deps?: DependencyList,
-  ): void;
-  export function useRef<T>(initial: T): { current: T };
-  export function useState<S>(
-    initialState: S | (() => S),
-  ): [S, Dispatch<SetStateAction<S>>];
-  export function act(effect: () => void | Promise<void>): Promise<void>;
-
-  export namespace React {
-    type RefObject<T> = RefObject<T>;
-    type MouseEvent<T = Element> = MouseEvent<T>;
-    type KeyboardEvent<T = Element> = KeyboardEvent<T>;
-    type WheelEvent<T = Element> = WheelEvent<T>;
-  }
-}
-
-declare namespace React {
-  type RefObject<T> = import("react").RefObject<T>;
-  type MouseEvent<T = Element> = import("react").MouseEvent<T>;
-}
-
-declare module "react/jsx-runtime" {
-  export type JSXElement = unknown;
-  export function jsx(type: unknown, props: unknown, key?: unknown): JSXElement;
-  export function jsxs(type: unknown, props: unknown, key?: unknown): JSXElement;
-  export const Fragment: unique symbol;
-}
-
-declare namespace JSX {
-  type Element = unknown;
-  interface IntrinsicAttributes {
-    key?: string;
-  }
-  interface IntrinsicElements {
-    [elementName: string]: any;
-  }
-  interface ElementChildrenAttribute {
-    children: any;
-  }
-}
-
-declare module "react-dom/client" {
-  import type { ReactNode } from "react";
-
-  export interface Root {
-    render(node: ReactNode): void;
-    unmount(): void;
-  }
-
-  export function createRoot(container: Element | DocumentFragment): Root;
-}
-
+/** jsdom ships no bundled declarations; keep the minimal test-surface stub. */
 declare module "jsdom" {
   export class JSDOM {
     constructor(html?: string, options?: Record<string, unknown>);

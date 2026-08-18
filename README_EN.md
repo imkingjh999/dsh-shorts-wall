@@ -43,7 +43,7 @@ Header `YT` / `B站` chips switch sources (remembered), with a "Switching…" to
 
 ## Project status
 
-Current `review_audit` score: **91 / 100** (2026-08-17, v1.0.4 review baseline).
+Current `review_audit` score: **90 / 100** (2026-08-18, v1.1.0 review baseline).
 
 ### Review standard
 
@@ -66,8 +66,8 @@ DSH `review_audit` provides the objective baseline, followed by sampled review o
 | Robustness | 85 | Starts at 85; minus 5 per empty `catch`, minus 2 per leftover debug output |
 | Tests | 100 | Passing suite scores `60 + min(40, test-file count × 10)`; a failing suite scores 20 |
 | Docs | 100 | README 40, LICENSE 25, `.gitignore` 20, and README completeness 15 |
-| Performance | 84 | Starts at 85; minus 3 per oversized file, minus 4 per 10 dependencies (maximum deduction 20), plus minus 15 above 20,000 lines |
-| Security | 87 | Starts at 90; dependency-count deduction capped at 25, additional deductions for debug residue and empty `catch`; dependency-audit vulnerabilities add further penalties when enabled |
+| Performance | 83 | Starts at 85; minus 3 per oversized file, minus 4 per 10 dependencies (maximum deduction 20), plus minus 15 above 20,000 lines |
+| Security | 86 | Starts at 90; dependency-count deduction capped at 25, additional deductions for debug residue and empty `catch`; dependency-audit vulnerabilities add further penalties when enabled |
 
 **Minimum manual review**
 
@@ -121,7 +121,7 @@ In the profile's `cordis.patch.yml`:
 
 - **Host** (`src/index.ts`): `POST /shorts/api/feed` (youtube shorts search · bilibili vertical search) + `POST /shorts/api/play` (bilibili mp4) + `GET /shorts/proxy` (browser-trust fence + CDN allowlist + Range passthrough). Legacy `/bilibili/*` prefixes kept for compat.
 - **Resolvers** (`src/youtube.ts`, `src/bilibili-shorts.ts`): YT anonymous search `shortsLockupViewModel` (+ legacy `reelItemRenderer`); Bilibili search + concurrent portrait preflight + html5 mp4 playurl.
-- **Client** (`src/client/`): floating-window rendering over three behavior hooks — `embed-events` (YT player events/watchdog), `feed-state` (dual-source batches/append/keywords), `card-timers` (cover/title timing) — plus `i18n` (zh/en). better-sidebar is no longer required.
+- **Client** (`src/client/`): the shell comes from the npm package [`dsh-float-window`](https://www.npmjs.com/package/dsh-float-window) (float/dock/minimize, four-corner resizing, boss key); this repository supplies only plugin labels and content. Behavior hooks: `embed-events` (YT player events/watchdog), `feed-state` (dual-source batches/append/keywords), and `card-timers` (cover/title timing), plus `i18n` (zh/en). better-sidebar is no longer required.
 
 ## Known limits
 

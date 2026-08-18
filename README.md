@@ -44,7 +44,7 @@
 
 ## 项目状态
 
-当前 `review_audit` 综合评分：**91 / 100**（2026-08-17，v1.0.4 审查基线）。
+当前 `review_audit` 综合评分：**90 / 100**（2026-08-18，v1.1.0 审查基线）。
 
 ### 审查标准
 
@@ -67,8 +67,8 @@
 | 健壮性 | 85 | 基线 85；每个空 `catch` 扣 5 分，每个调试输出残留扣 2 分 |
 | 测试 | 100 | 测试全部通过时为 `60 + min(40, 测试文件数 × 10)`；测试失败记 20 分 |
 | 文档 | 100 | README 40 分、LICENSE 25 分、`.gitignore` 20 分、README 内容完整性 15 分 |
-| 性能 | 84 | 基线 85；每个超大文件扣 3 分，每 10 个依赖扣 4 分（最多扣 20），代码超过 2 万行另扣 15 分 |
-| 安全 | 87 | 基线 90；按依赖数扣分（最多 25），调试残留与空 `catch` 另扣分；启用依赖审计时按高危/严重漏洞追加扣分 |
+| 性能 | 83 | 基线 85；每个超大文件扣 3 分，每 10 个依赖扣 4 分（最多扣 20），代码超过 2 万行另扣 15 分 |
+| 安全 | 86 | 基线 90；按依赖数扣分（最多 25），调试残留与空 `catch` 另扣分；启用依赖审计时按高危/严重漏洞追加扣分 |
 
 **人工复核最低要求**
 
@@ -124,7 +124,7 @@ profile 的 `cordis.patch.yml`：
 
 - **宿主半**（`src/index.ts`）：`POST /shorts/api/feed`（youtube shorts 搜索 · bilibili 竖屏搜索）+ `POST /shorts/api/play`（bilibili mp4 取流）+ `GET /shorts/proxy`（浏览器信任围栏 + CDN 白名单 + Range 直通）。旧 `/bilibili/*` 前缀保留兼容。
 - **解析器**（`src/youtube.ts`、`src/bilibili-shorts.ts`）：YT 匿名搜索页 `shortsLockupViewModel`（兼容 `reelItemRenderer`）；B站搜索 + 并发 view 竖屏预检 + html5 mp4 playurl。
-- **client 半**（`src/client/`）：浮窗渲染组件 + 三个行为 hook——`embed-events`（YT 播放器事件/看门狗）、`feed-state`（双源批次/续批/关键词）、`card-timers`（封面/标题时序）+ `i18n`（zh/en）。不再依赖 better-sidebar。
+- **client 半**（`src/client/`）：窗口外壳来自 npm 包 [`dsh-float-window`](https://www.npmjs.com/package/dsh-float-window)（浮动/贴边/最小化、四角缩放、老板键），本仓库只保留插件文案与内容；行为 hook 为 `embed-events`（YT 播放器事件/看门狗）、`feed-state`（双源批次/续批/关键词）、`card-timers`（封面/标题时序）+ `i18n`（zh/en）。不再依赖 better-sidebar。
 
 ## 已知限制
 

@@ -78,6 +78,6 @@
   "homepage": "https://github.com/imkingjh999/dsh-shorts-wall#readme",
   "author": "imkingjh999",
   "dependencies": {
-    "dsh-float-window": "^0.3.0"
+    "dsh-float-window": "^0.3.1"
   }
 }

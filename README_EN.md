@@ -44,7 +44,7 @@ Header `YT` / `B站` chips switch sources (remembered), with a "Switching…" to
 
 ## Project status
 
-Current `review_audit` score: **90 / 100** (2026-08-18, v1.1.0 review baseline).
+Current `review_audit` score: **90 / 100** (2026-08-19, v1.3.1 review baseline).
 
 ### Review standard
 

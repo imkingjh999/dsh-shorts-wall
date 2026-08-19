@@ -34,6 +34,8 @@ export function FloatingShell(): ReactNode {
         modeToggleTip: t("shell.modeToggleTip"),
         floatText: t("shell.floatText"),
         bossKeyText: t("shell.bossKey"),
+        maximizeTitle: t("shell.maximize"),
+        restoreTitle: t("shell.restore"),
       }}
     >
       {(visible) => (

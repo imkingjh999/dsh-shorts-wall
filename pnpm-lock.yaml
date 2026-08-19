@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       dsh-float-window:
-        specifier: ^0.2.0
-        version: 0.2.0(react@18.3.1)
+        specifier: ^0.3.0
+        version: 0.3.0(react@18.3.1)
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -760,8 +760,8 @@ packages:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
 
-  dsh-float-window@0.2.0:
-    resolution: {integrity: sha512-YZYetiZTnlo1u4WU4PlUNFnegI86fBvCFp/6MjtQnPdy1TjjfB6vCSlXDWU6Ke2HjhcqC2MayKWgvfyYHMQK/w==}
+  dsh-float-window@0.3.0:
+    resolution: {integrity: sha512-u9gmyi9k+hP4/4t75OzRQ5OaaQM4Bo58auqw6Hh9K3LzVMJ8878NQEK76cT5hJRDAyh7WJ+M0DVeAy7vc1YNDw==}
     peerDependencies:
       react: ^18.0.0
 
@@ -1707,7 +1707,7 @@ snapshots:
   detect-libc@2.1.2:
     optional: true
 
-  dsh-float-window@0.2.0(react@18.3.1):
+  dsh-float-window@0.3.0(react@18.3.1):
     dependencies:
       react: 18.3.1
 

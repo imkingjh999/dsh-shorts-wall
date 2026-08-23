@@ -30,7 +30,6 @@ export function FloatingShell(): ReactNode {
         openTitle: t("shell.open"),
         expandTitle: t("shell.expand"),
         minimizeTitle: t("shell.minimize"),
-        minimizeText: t("shell.minimizeText"),
         modeToggleTip: t("shell.modeToggleTip"),
         floatText: t("shell.floatText"),
         bossKeyText: t("shell.bossKey"),

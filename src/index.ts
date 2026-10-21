@@ -10,7 +10,6 @@ import {
   createTunnel,
   detectProxyUrl,
   isTunnelHost,
-  isTrustedRequest,
   type HostContext,
   type PluginConfig,
   type RouteHandler,
@@ -20,8 +19,8 @@ import { createProxyHandler } from "./server/media-proxy.ts";
 /** Plugin identity for cordis.yml rows. */
 export const name = "dsh-shorts-wall";
 
-/** Services required before mounting: webserver routes and trusted hosts. */
-export const inject = ["webServer", "webRuntime"];
+/** Services required before mounting: webserver routes and the trust fence. */
+export const inject = ["webServer", "connection"];
 
 export type { YtVideo } from "./youtube.ts";
 
@@ -31,8 +30,8 @@ export function apply(ctx: HostContext, config?: PluginConfig): void {
   const extraAllowSuffixes = Array.isArray(rawConfig.extraAllowSuffixes)
     ? rawConfig.extraAllowSuffixes.filter((s): s is string => typeof s === "string")
     : [];
-  const fence = (req: Parameters<typeof isTrustedRequest>[0]): boolean =>
-    isTrustedRequest(req, ctx.webRuntime.trustedHosts);
+  const fence = (req: Parameters<RouteHandler>[0]): boolean =>
+    ctx.connection.requestRejection(req) === undefined;
 
   const tunnel = createTunnel(detectProxyUrl(rawConfig.resolveProxyUrl));
   const scrapeFetch = ((

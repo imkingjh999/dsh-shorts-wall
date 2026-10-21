@@ -1,6 +1,6 @@
 {
   "name": "dsh-shorts-wall",
-  "version": "1.4.0",
+  "version": "1.4.2",
   "description": "dsh-shorts-wall — docked-first vertical shorts wall for DSH: YouTube Shorts + Bilibili carousel",
   "type": "module",
   "license": "MIT",
@@ -23,7 +23,8 @@
     "docked-window"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=20",
+    "dsh": ">=0.2.1-rc.2"
   },
   "main": "lib/index.js",
   "exports": {

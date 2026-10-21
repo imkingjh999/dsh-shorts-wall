@@ -27,7 +27,7 @@ export class YtError extends Error {
 
 const DESKTOP_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
-const PAGE_TIMEOUT_MS = 20_000;
+const PAGE_TIMEOUT_MS = 45_000;
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 
 /**

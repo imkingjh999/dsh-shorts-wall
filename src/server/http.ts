@@ -1,6 +1,8 @@
 /**
- * Shared HTTP primitives for the shorts-wall host routes: request trust
- * fencing, JSON helpers, proxy-host allowlisting, and egress selection.
+ * Shared HTTP primitives for the shorts-wall host routes: JSON helpers,
+ * proxy-host allowlisting, and egress selection. Request trust fencing lives
+ * on the composition's `connection` service (`requestRejection`), consumed in
+ * the plugin entry.
  */
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { YtError } from "../youtube.ts";
@@ -18,7 +20,8 @@ export interface HostContext {
       handler: RouteHandler;
     }): () => void;
   };
-  webRuntime: { trustedHosts: readonly string[] };
+  /** dsh ≥0.2.1 trust fence: Host/Origin check plus browser auth. */
+  connection: { requestRejection(req: IncomingMessage): number | undefined };
 }
 
 /** Optional plugin config (profile patch row `shorts-wall`). */
@@ -62,7 +65,8 @@ const TUNNEL_SUFFIXES = [
 /**
  * Resolve the egress proxy: explicit config first, then the standard proxy
  * environment variables. Node's fetch ignores HTTP(S)_PROXY, but desktop and
- * WSL setups commonly export one pointing at a local clash/v2ray exit.
+ * WSL setups commonly export one pointing at a local clash/v2ray exit
+ * (HTTP or SOCKS5 — `socks5://` resolves DNS on the proxy side).
  */
 export function detectProxyUrl(configured: string | undefined): string | undefined {
   if (typeof configured === "string" && configured !== "") return configured;
@@ -75,7 +79,14 @@ export function detectProxyUrl(configured: string | undefined): string | undefin
     "all_proxy",
   ]) {
     const value = process.env[key];
-    if (typeof value === "string" && value.startsWith("http://")) return value;
+    if (
+      typeof value === "string" &&
+      (value.startsWith("http://") ||
+        value.startsWith("socks5://") ||
+        value.startsWith("socks5h://"))
+    ) {
+      return value;
+    }
   }
   return undefined;
 }
@@ -93,62 +104,7 @@ export function isTunnelHost(rawUrl: string): boolean {
 
 /** Create the optional CONNECT tunnel used for YouTube-owned hosts. */
 export function createTunnel(proxyUrl: string | undefined) {
-  return proxyUrl !== undefined ? createProxyFetch(proxyUrl, 20_000) : undefined;
-}
-
-/** Whether a request's Host header names the loopback authority. */
-function isLoopbackHostname(hostname: string): boolean {
-  if (hostname === "localhost" || hostname === "[::1]") return true;
-  const parts = hostname.split(".");
-  return (
-    parts.length === 4 &&
-    parts[0] === "127" &&
-    parts.every((part) => /^\d{1,3}$/.test(part) && Number(part) <= 255)
-  );
-}
-
-/** Whether the request authority matches a trustedHosts entry. */
-function isTrustedAuthority(hostUrl: URL, trustedHosts: readonly string[]): boolean {
-  return trustedHosts.some((entry) => {
-    try {
-      const entryUrl = new URL(`http://${entry}`);
-      const sameHost = entryUrl.hostname === hostUrl.hostname;
-      const entryPort = entryUrl.port !== "" ? entryUrl.port : "80";
-      const hostPort = hostUrl.port !== "" ? hostUrl.port : "80";
-      return sameHost && entryPort === hostPort;
-    } catch {
-      return false;
-    }
-  });
-}
-
-/**
- * Decide whether one request may reach the plugin routes: the Host header is
- * loopback or trusted, and the request carries no cross-site browser markers.
- */
-export function isTrustedRequest(
-  req: IncomingMessage,
-  trustedHosts: readonly string[],
-): boolean {
-  const host = req.headers.host;
-  if (typeof host !== "string" || host === "") return false;
-  let hostUrl: URL;
-  try {
-    hostUrl = new URL(`http://${host}`);
-  } catch {
-    return false;
-  }
-  if (!isLoopbackHostname(hostUrl.hostname) && !isTrustedAuthority(hostUrl, trustedHosts))
-    return false;
-  if (req.headers["sec-fetch-site"] === "cross-site") return false;
-  const rawOrigin = req.headers.origin;
-  const origin = Array.isArray(rawOrigin) ? rawOrigin[0] : rawOrigin;
-  if (origin === undefined || origin === "") return true;
-  try {
-    return new URL(origin).host === hostUrl.host;
-  } catch {
-    return false;
-  }
+  return proxyUrl !== undefined ? createProxyFetch(proxyUrl, 60_000) : undefined;
 }
 
 /** Whether an upstream URL's host is on the proxy allowlist. */
